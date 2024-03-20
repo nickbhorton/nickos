@@ -1,4 +1,4 @@
-cp myos.bin /boot/myos.bin
+cp myos.iso /boot/myos.iso
 rm /etc/grub.d/40_custom
 echo "#!/bin/sh
 exec tail -n +3 \$0

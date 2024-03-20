@@ -9,6 +9,7 @@ cross/include
 
 .cache
 compile_commands.json
+.clang-format
 
 *.o
 *.bin
