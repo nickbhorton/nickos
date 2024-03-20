@@ -6,3 +6,12 @@ cross/libexec
 cross/share
 cross/i686-elf
 cross/include
+
+.cache
+compile_commands.json
+
+*.o
+*.bin
+*.iso
+
+isodir
