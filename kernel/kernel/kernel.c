@@ -29,7 +29,8 @@ void kernel_main(void) {
     printf("14.\n");
     printf("15.\n");
     printf("16.\n");
-    printf("17.\n");
+    printf("17. welcome the the seventeenth line lets goooooo\n");
+    printf("18. welcome the the eightteenth line lets goooooo\n");
 }
 
 

@@ -63,18 +63,16 @@ void terminal_newline(void)
         // scroll
         for (size_t y = 1; y < VGA_HEIGHT; y++)
         {
-            for (size_t x = 0; x < VGA_WIDTH; x++)
-            {
-                uint16_t current = terminal_buffer[terminal_get_index(x, y)];
-                terminal_putentryat(vga_char_from_entry(current), vga_color_from_entry(current), x, y-1);
-            }
+            memcpy(&terminal_buffer[(y - 1) * VGA_WIDTH],
+                   &terminal_buffer[y * VGA_WIDTH],
+                   sizeof(uint16_t) * VGA_WIDTH);
         }
         // terminal_row still at bottom
+        memset(&terminal_buffer[(VGA_HEIGHT - 1) * (VGA_WIDTH)], 0, sizeof(uint16_t) * VGA_WIDTH);
         --terminal_row;
     }
     terminal_column = 0;
 }
-
 
 void terminal_write(const char *data, size_t size)
 {
