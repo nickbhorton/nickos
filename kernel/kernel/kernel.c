@@ -2,11 +2,13 @@
 #include <string.h>
 
 #include <kernel/tty.h>
+#include <kernel/serial.h>
 
 
 __attribute__ ((constructor)) void kernel_init(void)
 {
 	terminal_initialize();
+    printf("%d\n", serial_initialize());
     // printf("kernel_init(void) run\n");
 }
 
