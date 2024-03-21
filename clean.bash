@@ -9,3 +9,4 @@ cd ..
 cd kernel
 make clean
 cd ..
+rm -rf isodir

@@ -1,7 +1,8 @@
-$(info make libc)
-DEFAULT_HOST !=../default-host.bash
-HOST ?= $(DEFAULT_HOST)
-HOSTARCH !=../to-arch.bash $(HOST)
+$(info libc Makefule)
+
+DEFAULT_HOST!=../default-host.bash
+HOST?= $(DEFAULT_HOST)
+HOSTARCH!=../to-arch.bash $(HOST)
 
 CFLAGS?=-O2 -g
 CPPFLAGS?=
@@ -30,7 +31,8 @@ LIBK_CFLAGS:=$(LIBK_CFLAGS) $(KERNEL_ARCH_CFLAGS) -Iinclude
 LIBK_CPPFLAGS:=$(LIBK_CPPFLAGS) $(KERNEL_ARCH_CPPFLAGS)
 
 # freestanding objects
-FREEOBJS=$(ARCH_FREEOBJS)\
+FREEOBJS=\
+$(ARCH_FREEOBJS)\
 string/strlen.o\
 string/memcmp.o\
 string/memmove.o\
@@ -43,9 +45,12 @@ stdio/puts.o\
 
 
 # hosted objects
-HOSTEDOBJS=$(ARCH_HOSTEDOBJS)
+HOSTEDOBJS=\
+$(ARCH_HOSTEDOBJS)
 
-OBJS=$(FREEOBJS) $(HOSTEDOBJS)
+OBJS=\
+$(FREEOBJS) \
+$(HOSTEDOBJS)
 
 LIBK_OBJS=$(FREEOBJS:.o=.libk.o)
 
@@ -63,15 +68,14 @@ libc.a: $(OBJS)
 libk.a: $(LIBK_OBJS)
 	$(AR) rcs $@ $(LIBK_OBJS)
 
-.c.o:
+%.o: %.c
 	$(CC) -MD -c $< -o $@ -std=gnu11 $(CFLAGS) $(CPPFLAGS)
 
-.c.libk.o:
+%.libk.o: %.c
 	$(CC) -MD -c $< -o $@ -std=gnu11 $(LIBK_CFLAGS) $(LIBK_CPPFLAGS)
 
-.S.libk.o:
+%.libk.o: %.S
 	$(CC) -MD -c $< -o $@ $(LIBK_CFLAGS) $(LIBK_CPPFLAGS)
-
 
 clean:
 	rm -f $(BINARIES) *.a
