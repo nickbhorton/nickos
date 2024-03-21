@@ -1,18 +1,8 @@
-cross/src
-cross/src_tarballs
-cross/bin
-cross/lib
-cross/libexec
-cross/share
-cross/i686-elf
-cross/include
+sysroot 
 
 .cache
 compile_commands.json
 .clang-format
 
-*.o
-*.bin
 *.iso
-
 isodir

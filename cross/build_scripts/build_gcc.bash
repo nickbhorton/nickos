@@ -1,5 +1,5 @@
 #!/bin/bash
-cd $PREFIX/src
+cd $SRC
 which -- $TARGET-as || echo "$TARGET-as is not in the PATH"
 
 mkdir build-gcc

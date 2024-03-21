@@ -1,7 +1,7 @@
 .PHONY: all
 
 all: src_tarballs/binutils-2.42.tar.gz src_tarballs/gcc-13.2.0.tar.gz
-	./build.bash
+	./build_cross_compiler.bash
 
 src_tarballs:
 	mkdir -p src_tarballs

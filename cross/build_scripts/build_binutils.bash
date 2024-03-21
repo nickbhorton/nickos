@@ -1,5 +1,5 @@
 #!/bin/bash
-cd $PREFIX/src
+cd $SRC
 
 mkdir -vp build-binutils
 
