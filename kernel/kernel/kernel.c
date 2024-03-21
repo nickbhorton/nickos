@@ -1,6 +1,8 @@
 #include <stdio.h>
+#include <string.h>
 
 #include <kernel/tty.h>
+
 
 __attribute__ ((constructor)) void kernel_init(void)
 {
@@ -9,19 +11,11 @@ __attribute__ ((constructor)) void kernel_init(void)
 }
 
 void kernel_main(void) {
-	printf("Hello, kernel World!\nNewlines are working!\n");
-	printf("Testing printf:\"%s\" <- string1\n", "string1");
-    printf("\'%c\' <- char(\'f\')\n", 'f');
-    printf("%d <- int 17\n", 17);
-    printf("%d <- int 2147483647\n", 2147483647);
-    printf("%d <- int -2147483648\n", -2147483648);
-    printf("%d <- int -17\n", -17);
-    printf("%d <- int -0\n", -0);
-    printf("%d <- int 0\n", 0);
-    printf("%d <- int 2\n", 2);
-    printf("%d <- int -1\n", -1);
-    printf("adding 5 newlines\n1\n2\n3\n4\n5");
-    printf("after newlines\n");
+    printf("strcmp(\"%s\", \"%s\") = %d\n", "Geeks", "Geeks", strcmp("Geeks", "Geeks"));
+    printf("strcmp(\"%s\", \"%s\") = %d\n", "zfz", "gfg", strcmp("zfz", "gfg"));
+    printf("strcmp(\"%s\", \"%s\") = %d\n", "bfb", "gfg", strcmp("bfb", "gfg"));
+    printf("strcmp(\"%s\", \"%s\") = %d\n", "Geekshello", "Geeks", strcmp("Geekshello", "Geeks"));
+    printf("strcmp(\"%s\", \"%s\") = %d\n", "Geeks", "Geekshello", strcmp("Geeks", "Geekshello"));
 }
 
 
