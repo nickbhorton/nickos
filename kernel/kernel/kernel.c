@@ -10,27 +10,18 @@ __attribute__ ((constructor)) void kernel_init(void)
 
 void kernel_main(void) {
 	printf("Hello, kernel World!\nNewlines are working!\n");
-	printf("Testing printf:\"%s\" <- string1, \'%c\' <- char(\'f\'), %d <- int 17", "string1", 'f', 17);
-    printf("adding 5 newlines\n\n\n\n\n");
+	printf("Testing printf:\"%s\" <- string1\n", "string1");
+    printf("\'%c\' <- char(\'f\')\n", 'f');
+    printf("%d <- int 17\n", 17);
+    printf("%d <- int 2147483647\n", 2147483647);
+    printf("%d <- int -2147483648\n", -2147483648);
+    printf("%d <- int -17\n", -17);
+    printf("%d <- int -0\n", -0);
+    printf("%d <- int 0\n", 0);
+    printf("%d <- int 2\n", 2);
+    printf("%d <- int -1\n", -1);
+    printf("adding 5 newlines\n1\n2\n3\n4\n5");
     printf("after newlines\n");
-    printf("1.\n");
-    printf("2.\n");
-    printf("3.\n");
-    printf("4.\n");
-    printf("5.\n");
-    printf("6.\n");
-    printf("7.\n");
-    printf("8.\n");
-    printf("9.\n");
-    printf("10.\n");
-    printf("11.\n");
-    printf("12.\n");
-    printf("13.\n");
-    printf("14.\n");
-    printf("15.\n");
-    printf("16.\n");
-    printf("17. welcome the the seventeenth line lets goooooo\n");
-    printf("18. welcome the the eightteenth line lets goooooo\n");
 }
 
 
