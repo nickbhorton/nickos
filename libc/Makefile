@@ -1,8 +1,8 @@
 $(info libc Makefule)
 
-DEFAULT_HOST!=../default-host.bash
-HOST?= $(DEFAULT_HOST)
-HOSTARCH!=../to-arch.bash $(HOST)
+DEFAULT_HOST != ${SCRIPTSDIR}/default-host.bash
+HOST         ?= ${DEFAULT_HOST}
+HOSTARCH     != ${SCRIPTSDIR}/to-arch.bash ${HOST}
 
 CFLAGS?=-O2 -g
 CPPFLAGS?=

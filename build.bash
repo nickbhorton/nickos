@@ -1,8 +1,9 @@
 #!/bin/bash
 export PATH=$PATH:$(pwd)/sysroot/bin
+export SCRIPTSDIR=$(pwd)/scripts
 
 export MAKE=${MAKE:-make}
-export HOST=${HOST:-$(./default-host.bash)}
+export HOST=${HOST:-$(${SCRIPTSDIR}/default-host.bash)}
 
 export AR=${HOST}-ar
 export AS=${HOST}-as
