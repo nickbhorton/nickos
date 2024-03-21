@@ -33,21 +33,29 @@ KERNEL_OBJS=\
 $(KERNEL_ARCH_OBJS) \
 kernel/kernel.o \
 
+CRTI_OBJ=$(ARCHDIR)/crti.o
+CRTBEGIN_OBJ:=$(shell $(CC) $(CFLAGS) -print-file-name=crtbegin.o)
+# $(info crtbegin.o = $(CRTBEGIN_OBJ))
+CRTEND_OBJ:=$(shell $(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=crtend.o)
+# $(info crtend.o = $(CRTEND_OBJ))
+CRTN_OBJ=$(ARCHDIR)/crtn.o
+
 OBJS=\
-$(ARCHDIR)/crti.o \
-$(ARCHDIR)/crtbegin.o \
+$(CRTI_OBJ) \
+$(CRTBEGIN_OBJ) \
 $(KERNEL_OBJS) \
-$(ARCHDIR)/crtend.o \
-$(ARCHDIR)/crtn.o \
+$(CRTEND_OBJ) \
+$(CRTN_OBJ) \
+
+INTERNAL_OBJS=\
+$(CRTI_OBJ) \
+$(KERNEL_OBJS) \
+$(CRTN_OBJ) \
 
 LINK_LIST=\
 $(LDFLAGS) \
-$(ARCHDIR)/crti.o \
-$(ARCHDIR)/crtbegin.o \
-$(KERNEL_OBJS) \
+$(OBJS) \
 $(LIBS) \
-$(ARCHDIR)/crtend.o \
-$(ARCHDIR)/crtn.o \
 
 
 .PHONY: all clean install install-headers install-kernel
@@ -59,9 +67,6 @@ nickos.kernel: $(OBJS) $(ARCHDIR)/linker.ld
 	$(CC) -T $(ARCHDIR)/linker.ld -o $@ $(CFLAGS) $(LINK_LIST)
 	grub-file --is-x86-multiboot nickos.kernel
 
-$(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
-	OBJ=`$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` && cp "$$OBJ" $@
-
 %.o : %.c
 	$(CC) -MD -c $< -o $@ -std=gnu11 $(CFLAGS) $(CPPFLAGS)
 
@@ -70,8 +75,8 @@ $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 
 clean:
 	rm -f nickos.kernel
-	rm -f $(OBJS) *.o */*.o */*/*.o
-	rm -f $(OBJS:.o=.d) *.d */*.d */*/*.d
+	rm -f $(INTERNAL_OBJS) *.o */*.o */*/*.o
+	rm -f $(INTERNAL_OBJS:.o=.d) *.d */*.d */*/*.d
 
 install: install-headers install-kernel
 

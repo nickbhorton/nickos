@@ -1,9 +1,8 @@
 #!/bin/bash
 set -e
+# period means source but using a period is compatible with POSIX sh
 . ./build.bash
 
-mkdir -p isodir
-mkdir -p isodir/boot
 mkdir -p isodir/boot/grub
 
 cp sysroot/boot/nickos.kernel isodir/boot/nickos.kernel

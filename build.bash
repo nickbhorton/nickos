@@ -28,8 +28,8 @@ export CC="$CC --sysroot=$SYSROOT"
 # because it was configured with --without-headers rather than --with-sysroot.
 export CC="$CC -isystem=$INCLUDEDIR"
 
-cd libc && DESTDIR=$SYSROOT make install
+cd libc && DESTDIR=$SYSROOT ${MAKE} install
 cd ..
-cd kernel && DESTDIR=$SYSROOT make install
+cd kernel && DESTDIR=$SYSROOT ${MAKE} install
 cd ..
 

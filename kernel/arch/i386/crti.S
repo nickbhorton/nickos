@@ -10,6 +10,7 @@ _init:
 .global _fini
 .type _fini, @function
 _fini:
+    call kernel_init
 	push %ebp
 	movl %esp, %ebp
 	/* gcc will nicely put the contents of crtbegin.o's .fini section here. */
