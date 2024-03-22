@@ -1,57 +1,56 @@
-$(info libc Makefule)
+$(info libc Makefile)
 
-DEFAULT_HOST != ${SCRIPTSDIR}/default-host.bash
-HOST         ?= ${DEFAULT_HOST}
-HOSTARCH     != ${SCRIPTSDIR}/to-arch.bash ${HOST}
+DEFAULT_HOST  != ${SCRIPTSDIR}/default-host.bash
+HOST          ?= ${DEFAULT_HOST}
+HOSTARCH      != ${SCRIPTSDIR}/to-arch.bash ${HOST}
 
-CFLAGS?=-O2 -g
-CPPFLAGS?=
-LDFLAGS?=
-LIBS?=
+CFLAGS        ?= -O2 -g
+CPPFLAGS      ?=
+LDFLAGS       ?=
+LIBS          ?=
 
-DESTDIR?=
-PREFIX?=/usr/local
-EXEC_PREFIX?=$(PREFIX)
-INCLUDEDIR?=$(PREFIX)/include
-LIBDIR?=$(EXEC_PREFIX)/lib
+DESTDIR       ?=
+PREFIX        ?= /usr/local
+EXEC_PREFIX   ?= $(PREFIX)
+INCLUDEDIR    ?= $(PREFIX)/include
+LIBDIR        ?= $(EXEC_PREFIX)/lib
 
-CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra 
-CPPFLAGS:=$(CPPFLAGS) -D__is_kernel -isystem=include
-LDFLAGS:=$(LDFLAGS)
-LIBK_CPPFLAGS:=$(CPPFLAGS) -D__is_libk
+CFLAGS        := $(CFLAGS) -ffreestanding -Wall -Wextra 
+CPPFLAGS      := $(CPPFLAGS) -D__is_kernel -isystem=include
+LDFLAGS       := $(LDFLAGS)
+LIBK_CPPFLAGS := $(CPPFLAGS) -D__is_libk
 
-# include architecture specific make config
-ARCHDIR=arch/$(HOSTARCH)
+ARCHDIR       ?= arch/$(HOSTARCH)
 include $(ARCHDIR)/make.config
 
-# add flags from architecture
-CFLAGS:=$(CFLAGS) $(ARCH_CFLAGS)
-CPPFLAGS:=$(CPPFLAGS) $(ARCH_CPPFLAGS)
-LIBK_CFLAGS:=$(LIBK_CFLAGS) $(KERNEL_ARCH_CFLAGS) -Iinclude
-LIBK_CPPFLAGS:=$(LIBK_CPPFLAGS) $(KERNEL_ARCH_CPPFLAGS)
+# update flags from architecture config
+CFLAGS        := $(CFLAGS) $(ARCH_CFLAGS)
+CPPFLAGS      := $(CPPFLAGS) $(ARCH_CPPFLAGS)
+
+LIBK_CFLAGS   := $(LIBK_CFLAGS) $(KERNEL_ARCH_CFLAGS) -Iinclude
+LIBK_CPPFLAGS := $(LIBK_CPPFLAGS) $(KERNEL_ARCH_CPPFLAGS)
 
 # freestanding objects
-FREEOBJS=\
-$(ARCH_FREEOBJS)\
-string/strlen.o\
-string/strcmp.o\
-string/memcmp.o\
-string/memmove.o\
-string/memset.o\
-string/memcpy.o\
-stdlib/abort.o\
-stdio/printf.o\
-stdio/putchar.o\
-stdio/puts.o\
+FREEOBJS:=\
+	$(ARCH_FREEOBJS)   \
+	string/strlen.o    \
+	string/strcmp.o    \
+	string/memcmp.o    \
+	string/memmove.o   \
+	string/memset.o    \
+	string/memcpy.o    \
+	stdlib/abort.o     \
+	stdio/snprintf.o     \
+	stdio/putchar.o    \
 
 
 # hosted objects
 HOSTEDOBJS=\
-$(ARCH_HOSTEDOBJS)
+	$(ARCH_HOSTEDOBJS) \
 
 OBJS=\
-$(FREEOBJS) \
-$(HOSTEDOBJS)
+	$(FREEOBJS)        \
+	$(HOSTEDOBJS)      \
 
 LIBK_OBJS=$(FREEOBJS:.o=.libk.o)
 
@@ -59,7 +58,6 @@ LIBK_OBJS=$(FREEOBJS:.o=.libk.o)
 BINARIES=libk.a
 
 .PHONY: all clean install install-headers install-libs
-.SUFFIXES: .o .libk.o .c .S
 
 all: $(BINARIES)
 

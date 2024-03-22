@@ -1,65 +1,65 @@
-$(info make kernel)
-DEFAULT_HOST != ${SCRIPTSDIR}/default-host.bash
-HOST         ?= ${DEFAULT_HOST}
-HOSTARCH     != ${SCRIPTSDIR}/to-arch.bash ${HOST}
+$(info kernel Makefile)
 
-CFLAGS?=-O2 -g
-CPPFLAGS?=
-LDFLAGS?=
-LIBS?=
+DEFAULT_HOST  != ${SCRIPTSDIR}/default-host.bash
+HOST          ?= ${DEFAULT_HOST}
+HOSTARCH      != ${SCRIPTSDIR}/to-arch.bash ${HOST}
 
-DESTDIR?=
-PREFIX?=/usr/local
-EXEC_PREFIX?=$(PREFIX)
-BOOTDIR?=$(EXEC_PREFIX)/boot
-INCLUDEDIR?=$(PREFIX)/include
+CFLAGS        ?= -O2 -g
+CPPFLAGS      ?=
+LDFLAGS       ?=
+LIBS          ?=
 
-CFLAGS := $(CFLAGS) -ffreestanding -Wall -Wextra
-CPPFLAGS := $(CPPFLAGS) -D__is_kernel -Iinclude
-LDFLAGS := $(LDFLAGS)
-LIBS := $(LIBS) -nostdlib -lk -lgcc
+DESTDIR       ?=
+PREFIX        ?= /usr/local
+EXEC_PREFIX   ?= $(PREFIX)
+BOOTDIR       ?= $(EXEC_PREFIX)/boot
+INCLUDEDIR    ?= $(PREFIX)/include
 
-ARCHDIR=arch/$(HOSTARCH)
+CFLAGS        := $(CFLAGS) -ffreestanding -Wall -Wextra
+CPPFLAGS      := $(CPPFLAGS) -D__is_kernel -Iinclude
+LDFLAGS       := $(LDFLAGS)
+LIBS          := $(LIBS) -nostdlib -lk -lgcc
 
-# include architecture specific config
+ARCHDIR       ?= arch/$(HOSTARCH)
 include $(ARCHDIR)/make.config
 
-CFLAGS:=$(CFLAGS) $(KERNEL_ARCH_CFLAGS)
-CPPFLAGS:=$(CPPFLAGS) $(KERNEL_ARCH_CPPFLAGS)
-LDFLAGS:=$(LDFLAGS) $(KERNEL_ARCH_LDFLAGS)
-LIBS:=$(LIBS) $(KERNEL_ARCH_LIBS)
+# update flags from architecture config
+CFLAGS        := $(CFLAGS) $(KERNEL_ARCH_CFLAGS)
+CPPFLAGS      := $(CPPFLAGS) $(KERNEL_ARCH_CPPFLAGS)
+LDFLAGS       := $(LDFLAGS) $(KERNEL_ARCH_LDFLAGS)
+LIBS          := $(LIBS) $(KERNEL_ARCH_LIBS)
 
 KERNEL_OBJS=\
-$(KERNEL_ARCH_OBJS) \
-kernel/kernel.o \
+	$(KERNEL_ARCH_OBJS) \
+	kernel/kernel.o     \
 
-CRTI_OBJ=$(ARCHDIR)/crti.o
-CRTBEGIN_OBJ:=$(shell $(CC) $(CFLAGS) -print-file-name=crtbegin.o)
-# $(info crtbegin.o = $(CRTBEGIN_OBJ))
-CRTEND_OBJ:=$(shell $(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=crtend.o)
-# $(info crtend.o = $(CRTEND_OBJ))
-CRTN_OBJ=$(ARCHDIR)/crtn.o
+# getting constructor objects
+CRTI_OBJ      := $(ARCHDIR)/crti.o
+CRTBEGIN_OBJ  := \
+	$(shell $(CC) $(CFLAGS) -print-file-name=crtbegin.o)
+CRTEND_OBJ    := \
+	$(shell $(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=crtend.o)
+CRTN_OBJ      := $(ARCHDIR)/crtn.o
 
 OBJS=\
-$(CRTI_OBJ) \
-$(CRTBEGIN_OBJ) \
-$(KERNEL_OBJS) \
-$(CRTEND_OBJ) \
-$(CRTN_OBJ) \
+	$(CRTI_OBJ)         \
+	$(CRTBEGIN_OBJ)     \
+	$(KERNEL_OBJS)      \
+	$(CRTEND_OBJ)       \
+	$(CRTN_OBJ)         \
 
 INTERNAL_OBJS=\
-$(CRTI_OBJ) \
-$(KERNEL_OBJS) \
-$(CRTN_OBJ) \
+	$(CRTI_OBJ)         \
+	$(KERNEL_OBJS)      \
+	$(CRTN_OBJ)         \
 
 LINK_LIST=\
-$(LDFLAGS) \
-$(OBJS) \
-$(LIBS) \
+	$(LDFLAGS)          \
+	$(OBJS)             \
+	$(LIBS)             \
 
 
 .PHONY: all clean install install-headers install-kernel
-.SUFFIXES: .o .c .S
 
 all: nickos.kernel
 

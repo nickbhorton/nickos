@@ -22,14 +22,54 @@ static inline uint8_t inb(uint16_t port)
     return ret;
 }
 
-int is_transmit_empty() {
-   return inb(COM1_SERIAL_PORT + 5) & 0x20;
+int serial_received() { return inb(COM1_SERIAL_PORT + 5) & 0x01; }
+
+char read_serial_char()
+{
+    while (serial_received() == 0)
+        ;
+
+    return inb(COM1_SERIAL_PORT);
 }
 
-void write_serial(char a) {
-   while (is_transmit_empty() == 0);
- 
-   outb(COM1_SERIAL_PORT,a);
+int is_transmit_empty() { return inb(COM1_SERIAL_PORT + 5) & 0x20; }
+
+void write_serial_char(char a)
+{
+    while (is_transmit_empty() == 0)
+        ;
+
+    outb(COM1_SERIAL_PORT, a);
+}
+
+int serial_write_str(const char *str)
+{
+    size_t i = 0;
+    for (i = 0; i < 1000; i++)
+    {
+        // on null byte break
+        if (!str[i])
+        {
+            break;
+        }
+        write_serial_char(str[i]);
+    }
+    return i;
+}
+
+int serial_write(char *str, size_t len)
+{
+    size_t i = 0;
+    for (i = 0; i < len && i < 100000; i++)
+    {
+        // on null byte break
+        if (!str[i])
+        {
+            break;
+        }
+        write_serial_char(str[i]);
+    }
+    return i;
 }
 
 int serial_initialize()
@@ -56,16 +96,5 @@ int serial_initialize()
     // If serial is not faulty set it in normal operation mode
     // (not-loopback with IRQs enabled and OUT#1 and OUT#2 bits enabled)
     outb(COM1_SERIAL_PORT + 4, 0x0F);
-    write_serial('h');
-    write_serial('e');
-    write_serial('l');
-    write_serial('l');
-    write_serial('o');
-    write_serial(' ');
-    write_serial('w');
-    write_serial('o');
-    write_serial('r');
-    write_serial('l');
-    write_serial('d');
     return 0;
 }

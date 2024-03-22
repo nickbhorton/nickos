@@ -3,6 +3,7 @@ set -e
 # period means source but using a period is compatible with POSIX sh
 . ./build.bash
 
+rm -rf isodir
 mkdir -p isodir/boot/grub
 
 cp sysroot/boot/nickos.kernel isodir/boot/nickos.kernel

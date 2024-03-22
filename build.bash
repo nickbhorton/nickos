@@ -30,6 +30,7 @@ export CC="$CC -isystem=$INCLUDEDIR"
 
 cd libc && DESTDIR=$SYSROOT ${MAKE} install
 cd ..
+
 cd kernel && DESTDIR=$SYSROOT ${MAKE} install
 cd ..
 

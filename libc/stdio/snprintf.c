@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
+/*
 static bool print(const char *data, size_t length)
 {
     const unsigned char *bytes = (const unsigned char *)data;
@@ -16,16 +17,7 @@ static bool print(const char *data, size_t length)
     }
     return true;
 }
-
-static bool printc(char data)
-{
-    const unsigned char byte = (const unsigned char)data;
-    if (putchar(byte) == EOF)
-    {
-        return false;
-    }
-    return true;
-}
+*/
 
 static char int_to_digit_char(int digit) { return (char)((digit + 48) % 128); }
 static char uint_to_digit_char(unsigned int digit)
@@ -142,6 +134,20 @@ static char uint_to_uc_hexdigit_char(unsigned int digit)
     return '0';
 }
 
+// needs to return however many bytes are written to dest
+int snprint(char *restrict dest, size_t start, size_t n, size_t max_n,
+            const char *restrict src)
+{
+    size_t src_index = 0;
+    for (size_t dest_index = start; dest_index < n + start && dest_index < max_n;
+         dest_index++)
+    {
+        dest[dest_index] = src[src_index];
+        ++src_index;
+    }
+    return src_index;
+}
+
 /*
  * limitations:
  *      flags not implemented
@@ -153,12 +159,12 @@ static char uint_to_uc_hexdigit_char(unsigned int digit)
  *          d -> int 4 bytes hardcoded
  *          s -> const char *
  */
-int printf(const char *restrict format, ...)
+int snprintf(char *restrict str, size_t n, const char *restrict format, ...)
 {
     va_list parameters;
     va_start(parameters, format);
 
-    int written = 0;
+    size_t written = 0;
 
     while (*format != '\0')
     {
@@ -173,18 +179,16 @@ int printf(const char *restrict format, ...)
             }
             size_t amount = 1;
             while (format[amount] && format[amount] != '%')
+            {
                 amount++;
+            }
             if (maxrem < amount)
             {
                 // TODO: Set errno to EOVERFLOW.
                 return -1;
             }
-            if (!print(format, amount))
-            {
-                return -1;
-            }
+            written += snprint(str, written, amount, n, format);
             format += amount;
-            written += amount;
             continue;
         }
 
@@ -202,28 +206,20 @@ int printf(const char *restrict format, ...)
                     // TODO: Set errno to EOVERFLOW.
                     return -1;
                 }
-                if (!printc(c))
-                {
-                    return -1;
-                }
-                written++;
+                written += snprint(str, written, 1, n, &c);
                 break;
             }
             case 's':
             {
                 format++;
-                const char *str = va_arg(parameters, const char *);
-                size_t len = strlen(str);
+                const char *va_arg_string = va_arg(parameters, const char *);
+                size_t len = strlen(va_arg_string);
                 if (maxrem < len)
                 {
                     // TODO: Set errno to EOVERFLOW.
                     return -1;
                 }
-                if (!print(str, len))
-                {
-                    return -1;
-                }
-                written += len;
+                written += snprint(str, written, len, n, va_arg_string);
                 break;
             }
             case 'i':
@@ -246,17 +242,15 @@ int printf(const char *restrict format, ...)
                 // lol
                 if (number == -2147483648)
                 {
-                    if (!print("-2147483648", 11))
-                    {
-                        return -1;
-                    }
+                    static const char *digit_string = "-2147483648";
+                    written += snprint(str, written, strlen(digit_string), n,
+                                       digit_string);
                 }
                 else if (number == 0)
                 {
-                    if (!print("0", 1))
-                    {
-                        return -1;
-                    }
+                    static const char *digit_string = "0";
+                    written += snprint(str, written, strlen(digit_string), n,
+                                       digit_string);
                 }
                 else
                 {
@@ -264,11 +258,9 @@ int printf(const char *restrict format, ...)
                     {
                         // TODO: test this
                         number = -number;
-                        if (!printc('-'))
-                        {
-                            return -1;
-                        }
-                        written++;
+                        static const char *digit_string = "-";
+                        written += snprint(str, written, strlen(digit_string),
+                                           n, digit_string);
                     }
                     while (number != 0)
                     {
@@ -279,11 +271,8 @@ int printf(const char *restrict format, ...)
                     }
                     const int size_of_digit_string =
                         max_digits - digit_string_index - 1;
-                    if (!print(digit_string + digit_string_index + 1,
-                               size_of_digit_string))
-                    {
-                        return -1;
-                    }
+                    written += snprint(str, written, size_of_digit_string, n,
+                                       digit_string + digit_string_index + 1);
                 }
                 break;
             }
@@ -305,10 +294,9 @@ int printf(const char *restrict format, ...)
                 }
                 if (number == 0)
                 {
-                    if (!print("0", 1))
-                    {
-                        return -1;
-                    }
+                    static const char *digit_string = "0";
+                    written += snprint(str, written, strlen(digit_string), n,
+                                       digit_string);
                 }
                 else
                 {
@@ -321,11 +309,8 @@ int printf(const char *restrict format, ...)
                     }
                     const int size_of_digit_string =
                         max_digits - digit_string_index - 1;
-                    if (!print(digit_string + digit_string_index + 1,
-                               size_of_digit_string))
-                    {
-                        return -1;
-                    }
+                    written += snprint(str, written, size_of_digit_string, n,
+                                       digit_string + digit_string_index + 1);
                 }
                 break;
             }
@@ -348,10 +333,9 @@ int printf(const char *restrict format, ...)
                 }
                 if (number == 0)
                 {
-                    if (!print("0", 1))
-                    {
-                        return -1;
-                    }
+                    static const char *digit_string = "0";
+                    written += snprint(str, written, strlen(digit_string), n,
+                                       digit_string);
                 }
                 else
                 {
@@ -372,11 +356,8 @@ int printf(const char *restrict format, ...)
                     }
                     const int size_of_digit_string =
                         max_digits - digit_string_index - 1;
-                    if (!print(digit_string + digit_string_index + 1,
-                               size_of_digit_string))
-                    {
-                        return -1;
-                    }
+                    written += snprint(str, written, size_of_digit_string, n,
+                                       digit_string + digit_string_index + 1);
                 }
                 break;
             }
@@ -389,9 +370,7 @@ int printf(const char *restrict format, ...)
                     // TODO: Set errno to EOVERFLOW.
                     return -1;
                 }
-                if (!print(format, len))
-                    return -1;
-                written += len;
+                written += snprint(str, written, len, n, format);
                 format += len;
                 break;
             }
