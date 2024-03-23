@@ -1,8 +1,13 @@
+#include <stdarg.h>
 #include <stdint.h>
+#include <stdio.h>
 
+#include <kernel/memory.h>
 #include <kernel/serial.h>
 
 #define COM1_SERIAL_PORT 0x3f8
+
+static const size_t max_serial_message_size = 1000;
 
 static inline void outb(uint16_t port, uint8_t val)
 {
@@ -97,4 +102,55 @@ int serial_initialize()
     // (not-loopback with IRQs enabled and OUT#1 and OUT#2 bits enabled)
     outb(COM1_SERIAL_PORT + 4, 0x0F);
     return 0;
+}
+
+void serial_print(const char *format, ...)
+{
+    char msg_buf[max_serial_message_size];
+
+    va_list parameters;
+    va_start(parameters, format);
+    int written = _snprintf(msg_buf, max_serial_message_size, format, parameters);
+    va_end(parameters);
+
+    serial_write(msg_buf, written);
+}
+
+void serial_print_page(uint32_t address)
+{
+    char msg_buf[max_serial_message_size];
+    int bytes_written = 0;
+    for (size_t i = 0; i < 1024; i += 16)
+    {
+        bytes_written = snprintf(
+            msg_buf, max_serial_message_size, "%X %d: ", address + (sizeof(uint32_t) * i), i);
+        serial_write(msg_buf, bytes_written);
+        for (size_t j = 0; j < 16; j++)
+        {
+            bytes_written =
+                snprintf(msg_buf, max_serial_message_size, "%X ",
+                         peekl((address + (sizeof(uint32_t) * (i + j)))));
+            serial_write(msg_buf, bytes_written);
+        }
+        bytes_written = snprintf(msg_buf, max_serial_message_size, "\n");
+        serial_write(msg_buf, bytes_written);
+    }
+    bytes_written = snprintf(msg_buf, max_serial_message_size, "\n");
+    serial_write(msg_buf, bytes_written);
+}
+
+void serial_print_bits_on(uint32_t val)
+{
+    char msg_buf[max_serial_message_size];
+    int bw = 0;
+    for (uint32_t i = 0; i < 32; i++)
+    {
+        if (val & 1 << i)
+        {
+            bw = snprintf(msg_buf, max_serial_message_size, "%d ", i);
+            serial_write(msg_buf, bw);
+        }
+    }
+    bw = snprintf(msg_buf, max_serial_message_size, "\n");
+    serial_write(msg_buf, bw);
 }

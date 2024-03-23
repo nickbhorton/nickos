@@ -5,6 +5,30 @@
 #include <string.h>
 
 /*
+ * limitations:
+ *      flags not implemented
+ *      optional field width not implemented
+ *      optional precision not implemented
+ *      optional length modifier not implemented
+ *      only conversion specifier character implemented
+ *          c -> char
+ *          d -> int 4 bytes hardcoded
+ *          s -> const char *
+ */
+int _snprintf(char *restrict str, size_t n, const char *restrict format,
+                     va_list parameters);
+int snprintf(char *restrict str, size_t n, const char *restrict format, ...)
+{
+    va_list parameters;
+    va_start(parameters, format);
+
+    int written = _snprintf(str, n, format, parameters);
+
+    va_end(parameters);
+    return written;
+}
+
+/*
 static bool print(const char *data, size_t length)
 {
     const unsigned char *bytes = (const unsigned char *)data;
@@ -139,8 +163,8 @@ int snprint(char *restrict dest, size_t start, size_t n, size_t max_n,
             const char *restrict src)
 {
     size_t src_index = 0;
-    for (size_t dest_index = start; dest_index < n + start && dest_index < max_n;
-         dest_index++)
+    for (size_t dest_index = start;
+         dest_index < n + start && dest_index < max_n; dest_index++)
     {
         dest[dest_index] = src[src_index];
         ++src_index;
@@ -148,22 +172,9 @@ int snprint(char *restrict dest, size_t start, size_t n, size_t max_n,
     return src_index;
 }
 
-/*
- * limitations:
- *      flags not implemented
- *      optional field width not implemented
- *      optional precision not implemented
- *      optional length modifier not implemented
- *      only conversion specifier character implemented
- *          c -> char
- *          d -> int 4 bytes hardcoded
- *          s -> const char *
- */
-int snprintf(char *restrict str, size_t n, const char *restrict format, ...)
+int _snprintf(char *restrict str, size_t n, const char *restrict format,
+                     va_list parameters)
 {
-    va_list parameters;
-    va_start(parameters, format);
-
     size_t written = 0;
 
     while (*format != '\0')
@@ -376,7 +387,5 @@ int snprintf(char *restrict str, size_t n, const char *restrict format, ...)
             }
         }
     }
-
-    va_end(parameters);
     return written;
 }
