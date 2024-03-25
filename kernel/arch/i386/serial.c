@@ -129,7 +129,7 @@ void serial_print_page(uint32_t address)
         {
             bytes_written =
                 snprintf(msg_buf, max_serial_message_size, "%X ",
-                         peekl((address + (sizeof(uint32_t) * (i + j)))));
+                         peekb((address + (i + j))));
             serial_write(msg_buf, bytes_written);
         }
         bytes_written = snprintf(msg_buf, max_serial_message_size, "\n");

@@ -58,4 +58,13 @@ static inline uint32_t read_ss(void)
     return val;
 }
 
+static inline uint32_t read_flags(void)
+{
+    unsigned long flags;
+    asm volatile("pushf\n\t"
+                 "pop %0"
+                 : "=g"(flags));
+    return flags;
+}
+
 #endif

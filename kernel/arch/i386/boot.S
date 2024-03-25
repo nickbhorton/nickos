@@ -27,10 +27,29 @@ boot_page_directory:
 	.skip 4096
 boot_page_table1:
 	.skip 4096
+gdt:
+    .skip 4096
 # Further page tables may be required if the kernel grows beyond 3 MiB.
 
 # The kernel entry point.
 .section .multiboot.text, "a"
+.global gdt_flush
+gdt_flush: 
+    movl 4(%esp),%eax
+    lgdt (%eax)
+
+    movw $0x18, %ax
+    movw %ax, %es
+    movw %ax, %fs
+    movw %ax, %gs
+    ret
+    movw %ax, %ss
+    movw %ax, %ds
+    jmp  $0x10,$flush
+
+flush:
+   ret
+
 .global _start
 .type _start, @function
 _start:
@@ -73,6 +92,80 @@ _start:
 3:
 	# Map VGA video memory to 0xC03FF000 as "present, writable".
 	movl $(0x000B8000 | 0x003), boot_page_table1 - 0xC0000000 + 1023 * 4
+    # Map gdt into 1022
+	movl $(gdt - 0xC0000000), boot_page_table1 - 0xC0000000 + 1022 * 4
+    # load the pysical memory address of gdt into eax
+    movl $(gdt - 0xC0000000), %eax
+
+    # use null descriptor space for use with gdtr
+    movw $0x0020, (%eax)
+    addl $2, %eax
+    movl $(gdt - 0xC0000000), (%eax)
+    
+    # goto 8 offset
+    addl $6, %eax
+    /*
+    Segment Descritor
+    +-----------------------------------------+
+    |63  56|55  52|51  48|47   40|39  16|15  0|
+    +-----------------------------------------+
+    |base  |flags |limit |access |base  |limit|
+    +-----------------------------------------+
+    |31  24|3    0|19  16|7     0|23   0|15  0|
+    +-----------------------------------------+
+
+    I don't want to use segmentation therefore base address will be 0 and limit will be 0xFFFFF
+    and the granilarity bit is set to page granilatiry (1) so that it maps all 4gb   
+
+    */
+    
+    /* ebx is bits 00->31 of seg desc */
+    movl $0, %ebx
+    // limit 15-0 set to max
+    orl $0b00000000000000001111111111111111, %ebx
+
+    /* ecx is bits 32->63 of seg desc */
+    movl $0, %ecx
+
+    # flags
+    // granularity bit set
+    orl $0b00000000100000000000000000000000, %ecx
+    // flag size bit set defines a 32 bit mode segment
+    orl $0b00000000010000000000000000000000, %ecx
+    
+    # access
+    // present bit set
+    orl $0b00000000000000001000000000000000, %ecx
+    // code of data segment bit set
+    orl $0b00000000000000000001000000000000, %ecx
+    // executable bit set
+    orl $0b00000000000000000000100000000000, %ecx
+    // read/write bit set
+    orl $0b00000000000000000000001000000000, %ecx
+
+
+    // limit 51-58 set to max
+    orl $0b00000000000011110000000000000000, %ecx
+
+    movl %ecx, (%eax)
+    addl $4, %eax
+    movl %ebx, (%eax)
+    addl $4, %eax
+    movl %ecx, (%eax)
+    addl $4, %eax
+    movl %ebx, (%eax)
+    addl $4, %eax
+    movl %ecx, (%eax)
+    addl $4, %eax
+    movl %ebx, (%eax)
+
+    cli
+
+    // movl $(gdt - 0xC0000000), %eax
+    # put args on the stack
+    push $(gdt - 0xC0000000)
+    # load gdt function
+    call gdt_flush
 
 	# The page table is used at both page directory entry 0 (virtually from 0x0
 	# to 0x3FFFFF) (thus identity mapping the kernel) and page directory entry
@@ -99,7 +192,6 @@ _start:
 	jmp *%ecx
 
 .section .text
-
 4:
 	# At this point, paging is fully set up and enabled.
 

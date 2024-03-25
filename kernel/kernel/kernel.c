@@ -1,9 +1,8 @@
-#include <kernel/serial.h>
-#include <kernel/register.h>
 #include <kernel/memory.h>
+#include <kernel/register.h>
+#include <kernel/serial.h>
 #include <kernel/tty.h>
 
-#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -24,22 +23,19 @@ __attribute__((constructor)) void kernel_init(void)
     }
 }
 
-
-
 void kernel_main(void)
 {
-    /*
-    serial_print_bits_on(read_cr0());
-    uint32_t page_dir_address_p = read_cr3();
-    uint32_t page_dir_address_v =
-        (page_dir_address_p | 0xc0000000);
-    serial_print_page(page_dir_address_v);
-    uint32_t page_dir_entry_768 =
-        peekl((page_dir_address_v + (768 * sizeof(uint32_t))));
-    uint32_t page_table1_pysical_address = page_dir_entry_768 & 0xFFFFF000;
-    uint32_t page_table1_virtual_address =
-        page_table1_pysical_address | 0xc0000000;
-    serial_print_page(page_table1_virtual_address);
-    */
-    serial_print_page(0xC0100000);
+    serial_print("ss:%X\n", read_ss());
+    serial_print("ds:%X\n", read_ds());
+    serial_print("fs:%X\n", read_fs());
+    serial_print("gs:%X\n", read_gs());
+    serial_print("cs:%X\n", read_cs());
+    serial_print("es:%X\n", read_es());
+    uint32_t address_of_page_1022_in_page_table_768 = physical_to_virtual(
+        get_page_address_p(get_page_table_entry(768, 1022)));
+    serial_print("page 1022\n");
+    serial_print_page(address_of_page_1022_in_page_table_768);
+    gdtr_t GDTR = read_gdtr();
+    serial_print("GDTR size: %X\nGDTR location: %X\n", GDTR.limit, GDTR.base);
+    serial_print("%d\n", farpeekl(101, (uint32_t *)102));
 }

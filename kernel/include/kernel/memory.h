@@ -1,7 +1,21 @@
 #ifndef _KERNEL_MEMORY_H_
 #define _KERNEL_MEMORY_H_
 
+#include "kernel/serial.h"
+#include <stdbool.h>
 #include <stdint.h>
+
+#include <kernel/register.h>
+
+#define VITRUAL_MEMORY_OFFSET 0xc0000000
+
+uint32_t farpeekl(uint32_t sel, uint32_t* off);
+
+typedef struct __attribute__((packed)) gdtr {
+    uint16_t limit;
+    uint32_t base;
+} gdtr_t;
+
 
 static inline uint32_t peekl(uint32_t address)
 {
@@ -13,5 +27,136 @@ static inline uint32_t peekl(uint32_t address)
                  : "eax");
     return ret;
 }
+
+static inline uint8_t peekb(uint32_t address)
+{
+    uint8_t ret;
+    asm volatile("movl  %1, %%eax\n\t"
+                 "movb  (%%eax), %0\n\t"
+                 : "=r"(ret)
+                 : "g"(address)
+                 : "eax");
+    return ret;
+}
+
+static inline void pokeb(uint32_t address, uint8_t val)
+{
+    asm("push %%eax;"
+        "movl %0, %%eax;"
+        "movb  %1, (%%eax);"
+        "pop  %%eax;"
+        :
+        : "r"(address), "r"(val)
+        : "memory");
+} 
+
+static inline void pokew(uint32_t address, uint16_t val)
+{
+    asm("push %%eax;"
+        "movl %0, %%eax;"
+        "movw %1, (%%eax);"
+        "pop  %%eax;"
+        :
+        : "r"(address), "r"(val)
+        : "memory");
+}
+
+static inline void pokel(uint32_t address, uint32_t val)
+{
+    asm("push %%eax;"
+        "movl %0, %%eax;"
+        "movl %1, (%%eax);"
+        "pop  %%eax;"
+        :
+        : "r"(address), "r"(val)
+        : "memory");
+}
+
+static inline void farpokel(uint16_t sel, uint32_t off, uint32_t val)
+{
+    asm("push %%fs\n\t"
+        "movw %0, %%fs\n\t"
+        "movl %2, %%fs:(%1)\n\t"
+        "pop %%fs"
+        :
+        : "g"(sel), "r"(off), "r"(val)
+        : "memory");
+}
+
+static inline gdtr_t read_gdtr()
+{
+    gdtr_t result = {0, 0};
+
+    asm("sgdt %0" : "=g"(result));
+
+    return result;
+}
+
+static inline uint32_t physical_to_virtual(uint32_t address)
+{
+    return address | VITRUAL_MEMORY_OFFSET;
+}
+
+static inline uint32_t virtual_to_physical(uint32_t address)
+{
+    return address & ~VITRUAL_MEMORY_OFFSET;
+}
+
+static inline uint32_t get_page_directory_address_p()
+{
+    // register cr3 contains the physical memory address of the page directory
+    return read_cr3();
+}
+
+static inline uint32_t get_page_directory_entry(uint16_t dir_index)
+{
+    return peekl(physical_to_virtual(get_page_directory_address_p()) +
+                 (dir_index * sizeof(uint32_t)));
+}
+
+static inline bool is_page_table_present(uint16_t dir_index)
+{
+    return get_page_directory_entry(dir_index) & 0x00000001;
+}
+
+static inline uint32_t get_page_table_address_p(uint32_t page_directory_entry)
+{
+    return page_directory_entry & 0xFFFFF000;
+}
+
+static inline uint32_t get_page_table_entry(uint16_t dir_index,
+                                            uint16_t table_index)
+{
+    return peekl(physical_to_virtual(
+        get_page_table_address_p(get_page_directory_entry(dir_index)) +
+        (table_index * sizeof(uint32_t))));
+}
+
+static inline uint32_t get_page_address_p(uint32_t page_table_entry)
+{
+    return page_table_entry & 0xFFFFF000;
+}
+
+static inline bool is_page_present(uint16_t dir_index, uint16_t table_index)
+{
+    return get_page_table_entry(dir_index, table_index) & 0x00000001;
+}
+
+/*
+static inline void set_page_table_entry(uint16_t dir_index,
+                                        uint16_t table_index,
+                                        uint32_t table_entry)
+{
+    uint32_t table_address = physical_to_virtual(
+        get_page_table_address_p(get_page_directory_entry(dir_index)));
+    uint32_t table_entry_address =
+        table_address + (table_index * sizeof(uint32_t));
+    serial_print("table address: %X\n", table_address);
+    serial_print("table entry address: %X\n", table_entry_address);
+    serial_print("new table entry value: %X\n", table_entry);
+    farpokel(0x10, table_entry_address, table_entry);
+    serial_print("table entry after load: %X\n", peekl(table_entry_address));
+}
+*/
 
 #endif
