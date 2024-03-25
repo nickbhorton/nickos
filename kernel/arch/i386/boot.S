@@ -29,40 +29,134 @@ boot_page_table1:
 	.skip 4096
 gdt:
     .skip 4096
+idt:
+    .skip 4096
 # Further page tables may be required if the kernel grows beyond 3 MiB.
 
 # The kernel entry point.
 .section .multiboot.text, "a"
 .global gdt_flush
+.type gdt_flush, @function
 gdt_flush: 
-    movl 4(%esp),%eax
+    cli
+    movl $(gdt - 0xC0000000),%eax
     lgdt (%eax)
 
-    movw $0x18, %ax
+    movw $0x10, %ax
     movw %ax, %es
     movw %ax, %fs
     movw %ax, %gs
-    ret
     movw %ax, %ss
     movw %ax, %ds
-    jmp  $0x10,$flush
+    jmp  $0x8,$flush
 
 flush:
    ret
+
+.global gdt_setup 
+.type gdt_setup, @function
+gdt_setup:
+    #### GDT ####
+    # load the pysical memory address of gdt into eax
+    movl $(gdt - 0xC0000000), %eax
+    # use null descriptor space for use with gdtr
+    movw $0x0020, (%eax)
+    addl $2, %eax
+    movl $(gdt - 0xC0000000), (%eax)
+    
+    # 8 offset for first descriptor
+    addl $6, %eax
+
+    /* Segment Descritor
+    +-----------------------------------------+
+    |63  56|55  52|51  48|47   40|39  16|15  0|
+    +-----------------------------------------+
+    |base  |flags |limit |access |base  |limit|
+    +-----------------------------------------+
+    |31  24|3    0|19  16|7     0|23   0|15  0|
+    +-----------------------------------------+
+    I don't want to use segmentation therefore base address will be 0 and limit will be 0xFFFFF
+    and the granilarity bit is set to page granilatiry (1) so that it maps all 4gb   */
+
+    # segment for .text. aka executable flag is on 
+    # 0
+    movb $0b11111111, %cl
+    movb %cl, (%eax)
+    addl $1, %eax
+    # 1
+    movb $0b11111111, %cl
+    movb %cl, (%eax)
+    addl $1, %eax
+    # 2
+    movb $0b00000000, %cl
+    movb %cl, (%eax)
+    addl $1, %eax
+    # 3
+    movb $0b00000000, %cl
+    movb %cl, (%eax)
+    addl $1, %eax
+    # 4
+    movb $0b00000000, %cl
+    movb %cl, (%eax)
+    addl $1, %eax
+    # 5 sus on   | this byte
+    movb $0b10011010, %cl
+    movb %cl, (%eax)
+    addl $1, %eax
+    # 6
+    movb $0b11001111, %cl
+    movb %cl, (%eax)
+    addl $1, %eax
+    # 7
+    movb $0b00000000, %cl
+    movb %cl, (%eax)
+    addl $1, %eax
+
+    # .data segment
+    # 0
+    movb $0b11111111, %cl
+    movb %cl, (%eax)
+    addl $1, %eax
+    # 1
+    movb $0b11111111, %cl
+    movb %cl, (%eax)
+    addl $1, %eax
+    # 2
+    movb $0b00000000, %cl
+    movb %cl, (%eax)
+    addl $1, %eax
+    # 3
+    movb $0b00000000, %cl
+    movb %cl, (%eax)
+    addl $1, %eax
+    # 4
+    movb $0b00000000, %cl
+    movb %cl, (%eax)
+    addl $1, %eax
+    # 5 sus on   | this byte
+    movb $0b10010010, %cl
+    movb %cl, (%eax)
+    addl $1, %eax
+    # 6
+    movb $0b11001111, %cl
+    movb %cl, (%eax)
+    addl $1, %eax
+    # 7
+    movb $0b00000000, %cl
+    movb %cl, (%eax)
+    addl $1, %eax
+
+    # load gdt function
+    call gdt_flush
+    
+    ret
 
 .global _start
 .type _start, @function
 _start:
 	# Physical address of boot_page_table1.
-	# TODO: I recall seeing some assembly that used a macro to do the
-	#       conversions to and from physical. Maybe this should be done in this
-	#       code as well?
-    #                             3G
 	movl $(boot_page_table1 - 0xC0000000), %edi
 	# First address to map is address 0.
-	# TODO: Start at the first kernel page instead. Alternatively map the first
-	#       1 MiB as it can be generally useful, and there's no need to
-	#       specially map the VGA buffer.
 	movl $0, %esi
 	# Map 1023 pages. The 1024th will be the VGA text buffer.
 	movl $1023, %ecx
@@ -90,82 +184,36 @@ _start:
 	loop 1b
 
 3:
+    #### MAPING PAGES ####
 	# Map VGA video memory to 0xC03FF000 as "present, writable".
-	movl $(0x000B8000 | 0x003), boot_page_table1 - 0xC0000000 + 1023 * 4
-    # Map gdt into 1022
-	movl $(gdt - 0xC0000000), boot_page_table1 - 0xC0000000 + 1022 * 4
-    # load the pysical memory address of gdt into eax
-    movl $(gdt - 0xC0000000), %eax
+	movl $(0x000B8000 + 0x003), boot_page_table1 - 0xC0000000 + 1023 * 4
+    # Map gdt into page 1022
+	movl $(gdt - 0xC0000000 + 0x03), boot_page_table1 - 0xC0000000 + 1022 * 4
+    # Map idt into page 1021
+	movl $(idt - 0xC0000000 + 0x03), boot_page_table1 - 0xC0000000 + 1021 * 4
 
-    # use null descriptor space for use with gdtr
-    movw $0x0020, (%eax)
+    #### GDT ####
+    call gdt_setup
+    
+    #### IDT ####
+    movl $(idt - 0xC0000000), %eax
+    # size of idt
+    movw $0x0008, (%eax)
     addl $2, %eax
-    movl $(gdt - 0xC0000000), (%eax)
-    
-    # goto 8 offset
-    addl $6, %eax
-    /*
-    Segment Descritor
-    +-----------------------------------------+
-    |63  56|55  52|51  48|47   40|39  16|15  0|
-    +-----------------------------------------+
-    |base  |flags |limit |access |base  |limit|
-    +-----------------------------------------+
-    |31  24|3    0|19  16|7     0|23   0|15  0|
-    +-----------------------------------------+
+    # location of idt
+    movl $(idt - 0xC0000000), (%eax)
+    # calling lidt
+    movl $(idt - 0xC0000000), %eax
+    lidt (%eax)
 
-    I don't want to use segmentation therefore base address will be 0 and limit will be 0xFFFFF
-    and the granilarity bit is set to page granilatiry (1) so that it maps all 4gb   
+    # clearing mem
+    movl $(idt - 0xC0000000), %eax
+    # size of idt
+    movw $0, (%eax)
+    addl $2, %eax
+    # location of idt
+    movl $0, (%eax)
 
-    */
-    
-    /* ebx is bits 00->31 of seg desc */
-    movl $0, %ebx
-    // limit 15-0 set to max
-    orl $0b00000000000000001111111111111111, %ebx
-
-    /* ecx is bits 32->63 of seg desc */
-    movl $0, %ecx
-
-    # flags
-    // granularity bit set
-    orl $0b00000000100000000000000000000000, %ecx
-    // flag size bit set defines a 32 bit mode segment
-    orl $0b00000000010000000000000000000000, %ecx
-    
-    # access
-    // present bit set
-    orl $0b00000000000000001000000000000000, %ecx
-    // code of data segment bit set
-    orl $0b00000000000000000001000000000000, %ecx
-    // executable bit set
-    orl $0b00000000000000000000100000000000, %ecx
-    // read/write bit set
-    orl $0b00000000000000000000001000000000, %ecx
-
-
-    // limit 51-58 set to max
-    orl $0b00000000000011110000000000000000, %ecx
-
-    movl %ecx, (%eax)
-    addl $4, %eax
-    movl %ebx, (%eax)
-    addl $4, %eax
-    movl %ecx, (%eax)
-    addl $4, %eax
-    movl %ebx, (%eax)
-    addl $4, %eax
-    movl %ecx, (%eax)
-    addl $4, %eax
-    movl %ebx, (%eax)
-
-    cli
-
-    // movl $(gdt - 0xC0000000), %eax
-    # put args on the stack
-    push $(gdt - 0xC0000000)
-    # load gdt function
-    call gdt_flush
 
 	# The page table is used at both page directory entry 0 (virtually from 0x0
 	# to 0x3FFFFF) (thus identity mapping the kernel) and page directory entry

@@ -1,7 +1,6 @@
 #ifndef _KERNEL_MEMORY_H_
 #define _KERNEL_MEMORY_H_
 
-#include "kernel/serial.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -9,7 +8,9 @@
 
 #define VITRUAL_MEMORY_OFFSET 0xc0000000
 
-uint32_t farpeekl(uint32_t sel, uint32_t* off);
+void pokel(uint32_t address, uint32_t value);
+void pokew(uint32_t address, uint16_t value);
+void pokeb(uint32_t address, uint8_t value);
 
 typedef struct __attribute__((packed)) gdtr {
     uint16_t limit;
@@ -39,55 +40,20 @@ static inline uint8_t peekb(uint32_t address)
     return ret;
 }
 
-static inline void pokeb(uint32_t address, uint8_t val)
-{
-    asm("push %%eax;"
-        "movl %0, %%eax;"
-        "movb  %1, (%%eax);"
-        "pop  %%eax;"
-        :
-        : "r"(address), "r"(val)
-        : "memory");
-} 
-
-static inline void pokew(uint32_t address, uint16_t val)
-{
-    asm("push %%eax;"
-        "movl %0, %%eax;"
-        "movw %1, (%%eax);"
-        "pop  %%eax;"
-        :
-        : "r"(address), "r"(val)
-        : "memory");
-}
-
-static inline void pokel(uint32_t address, uint32_t val)
-{
-    asm("push %%eax;"
-        "movl %0, %%eax;"
-        "movl %1, (%%eax);"
-        "pop  %%eax;"
-        :
-        : "r"(address), "r"(val)
-        : "memory");
-}
-
-static inline void farpokel(uint16_t sel, uint32_t off, uint32_t val)
-{
-    asm("push %%fs\n\t"
-        "movw %0, %%fs\n\t"
-        "movl %2, %%fs:(%1)\n\t"
-        "pop %%fs"
-        :
-        : "g"(sel), "r"(off), "r"(val)
-        : "memory");
-}
-
 static inline gdtr_t read_gdtr()
 {
     gdtr_t result = {0, 0};
 
     asm("sgdt %0" : "=g"(result));
+
+    return result;
+}
+
+static inline gdtr_t read_idtr()
+{
+    gdtr_t result = {0, 0};
+
+    asm("sidt %0" : "=g"(result));
 
     return result;
 }

@@ -25,17 +25,17 @@ __attribute__((constructor)) void kernel_init(void)
 
 void kernel_main(void)
 {
-    serial_print("ss:%X\n", read_ss());
-    serial_print("ds:%X\n", read_ds());
-    serial_print("fs:%X\n", read_fs());
-    serial_print("gs:%X\n", read_gs());
-    serial_print("cs:%X\n", read_cs());
-    serial_print("es:%X\n", read_es());
-    uint32_t address_of_page_1022_in_page_table_768 = physical_to_virtual(
+    uint32_t gdt_address = physical_to_virtual(
         get_page_address_p(get_page_table_entry(768, 1022)));
-    serial_print("page 1022\n");
-    serial_print_page(address_of_page_1022_in_page_table_768);
-    gdtr_t GDTR = read_gdtr();
-    serial_print("GDTR size: %X\nGDTR location: %X\n", GDTR.limit, GDTR.base);
-    serial_print("%d\n", farpeekl(101, (uint32_t *)102));
+    uint32_t idt_address = physical_to_virtual(
+        get_page_address_p(get_page_table_entry(768, 1021)));
+
+    pokeb(idt_address, 0xFF);
+
+    serial_print("gdt (page 1022)\n");
+    serial_print_page(gdt_address);
+    serial_print("idt (page 1021)\n");
+    serial_print_page(idt_address);
+    gdtr_t IDTR = read_idtr();
+    serial_print("IDTR size: %X\nIDTR location: %X\n", IDTR.limit, IDTR.base);
 }
