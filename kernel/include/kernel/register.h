@@ -10,13 +10,6 @@ static inline uint32_t read_cr0(void)
     return val;
 }
 
-static inline uint32_t read_cr3(void)
-{
-    unsigned long val;
-    asm volatile("mov %%cr3, %0" : "=r"(val));
-    return val;
-}
-
 static inline uint32_t read_cs(void)
 {
     unsigned long val;
