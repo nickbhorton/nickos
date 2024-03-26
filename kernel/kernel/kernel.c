@@ -27,23 +27,18 @@ __attribute__((constructor)) void kernel_init(void)
 void kernel_main(void)
 {
     uint32_t page_dir_address = physical_to_virtual(get_page_directory_address_p());
-    serial_print_page(page_dir_address);
-    /*
-    uint32_t gdt_address = physical_to_virtual(
-        get_page_address_p(get_page_table_entry(768, 1022)));
-    */
-    uint32_t idt_address = physical_to_virtual(
-        get_page_address_p(get_page_table_entry(768, 1021)));
-
+    serial_print("page directory");
+    serial_print_memory(page_dir_address, 0x1000, 8);
+    uint32_t gdt_address = get_page_address_p(get_page_table_entry(768, 1022));
+    uint32_t idt_address = get_page_address_p(get_page_table_entry(768, 1021));
+    gdtr_t GDTR = read_gdtr();
+    serial_print("GDTR size: %X\nGDTR location: %X\ngdt_address: %X\n", GDTR.limit, GDTR.base, gdt_address);
     idtr_t IDTR = read_idtr();
-    serial_print("IDTR size: %X\nIDTR location: %X\n", IDTR.limit, IDTR.base);
+    serial_print("IDTR size: %X\nIDTR location: %X\nidt_address: %X\n", IDTR.limit, IDTR.base, idt_address);
+    serial_print_memory(gdt_address, 0x100, 8);
     idt_init();
-    /*
-    serial_print("gdt (page 1022)\n");
-    serial_print_page(gdt_address);
-    */
-    serial_print("idt (page 1021)\n");
-    serial_print_page(idt_address);
+    serial_print("idt (pt 0 p 1)\n");
+    serial_print_memory(idt_address, 0x100, 8);
     serial_print_bits_on(read_flags());
     pokel(0x10000000, 1);
 }

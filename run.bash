@@ -16,7 +16,7 @@ EOF
 grub-mkrescue -o nickos.iso isodir
 
 rm -rf out.txt
-# qemu-system-$(${SCRIPTSDIR}/to-arch.bash $HOST) -d int -cdrom nickos.iso -serial stdio > out.txt
-qemu-system-$(${SCRIPTSDIR}/to-arch.bash $HOST) -cdrom nickos.iso -serial stdio > out.txt
+qemu-system-$(${SCRIPTSDIR}/to-arch.bash $HOST) -d int -cdrom nickos.iso -serial stdio > out.txt
+# qemu-system-$(${SCRIPTSDIR}/to-arch.bash $HOST) -cdrom nickos.iso -serial stdio > out.txt
 cat out.txt
 

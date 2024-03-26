@@ -36,7 +36,6 @@ static inline idtr_t read_idtr()
 }
 
 __attribute__((noreturn)) void exception_handler(void);
-__attribute__((noreturn)) void isr_stub_14(void);
 
 static inline void idt_set_descriptor(uint8_t vector, void *isr, uint8_t flags)
 {

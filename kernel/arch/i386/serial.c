@@ -110,33 +110,39 @@ void serial_print(const char *format, ...)
 
     va_list parameters;
     va_start(parameters, format);
-    int written = _snprintf(msg_buf, max_serial_message_size, format, parameters);
+    int written =
+        _snprintf(msg_buf, max_serial_message_size, format, parameters);
     va_end(parameters);
 
     serial_write(msg_buf, written);
 }
 
-void serial_print_page(uint32_t address)
+void serial_print_memory(uint32_t address, uint32_t number_of_bytes, uint32_t bytes_each_line)
 {
-    char msg_buf[max_serial_message_size];
-    int bytes_written = 0;
-    for (size_t i = 0; i < 4096; i += 16)
+    for (size_t i = 0; i < number_of_bytes; i += bytes_each_line)
     {
-        bytes_written = snprintf(
-            msg_buf, max_serial_message_size, "%X %d: ", address + i, i);
-        serial_write(msg_buf, bytes_written);
-        for (size_t j = 0; j < 16; j++)
+        char line_buf[max_serial_message_size];
+        int line_written = 0;
+        line_written += snprintf(line_buf, max_serial_message_size,
+                                 "%X %d: ", address + i, i);
+        bool found_non_zero_byte = false;
+        for (size_t j = 0; j < bytes_each_line; j++)
         {
-            bytes_written =
-                snprintf(msg_buf, max_serial_message_size, "%X ",
-                         peekb((address + (i + j))));
-            serial_write(msg_buf, bytes_written);
+            uint8_t cb = peekb(address + (i + j));
+            if (cb != 0)
+            {
+                found_non_zero_byte = true;
+            }
+            line_written += snprintf(line_buf + line_written,
+                                     max_serial_message_size, "%X ", cb);
         }
-        bytes_written = snprintf(msg_buf, max_serial_message_size, "\n");
-        serial_write(msg_buf, bytes_written);
+        line_written +=
+            snprintf(line_buf + line_written, max_serial_message_size, "\n");
+        if (found_non_zero_byte)
+        {
+            serial_write(line_buf, line_written);
+        }
     }
-    bytes_written = snprintf(msg_buf, max_serial_message_size, "\n");
-    serial_write(msg_buf, bytes_written);
 }
 
 void serial_print_bits_on(uint32_t val)
