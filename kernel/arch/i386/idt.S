@@ -1,5 +1,6 @@
 .text
 
+/*
 .global page_fault_handle
 .type page_fault_handle, @function
 page_fault_handle:
@@ -11,18 +12,28 @@ page_fault_handle:
     call serial_print
     addl $4, %esp
     iret 
+*/
 
+.global exception_handler
 exception_handler:
+    pushl $message1
+    call serial_print
+    addl $4, %esp
     cli
     hlt
 
+message1:
+    .ascii "exception\n\0"
+
 .macro isr_err_stub num
+.global isr_stub_\num
 isr_stub_\num:
     call exception_handler
     iret
 .endm
 
 .macro isr_no_err_stub num
+.global isr_stub_\num
 isr_stub_\num:
     call exception_handler
     iret
@@ -63,15 +74,41 @@ isr_no_err_stub 31
 
 .global isr_stub_table
 isr_stub_table:
-.macro generate_isr_stub_table from=0, to=31
-    .long   \from
-        .if     \to-\from
-        generate_isr_stub_table "(\from+1)",\to
-        .endif
-.endm
-generate_isr_stub_table
+    .long   isr_stub_0
+    .long   isr_stub_1
+    .long   isr_stub_2
+    .long   isr_stub_3
+    .long   isr_stub_4
+    .long   isr_stub_5
+    .long   isr_stub_6
+    .long   isr_stub_7
+    .long   isr_stub_8
+    .long   isr_stub_9
+    .long   isr_stub_10
+    .long   isr_stub_11
+    .long   isr_stub_12
+    .long   isr_stub_13
+    .long   isr_stub_14
+    .long   isr_stub_15
+    .long   isr_stub_16
+    .long   isr_stub_17
+    .long   isr_stub_18
+    .long   isr_stub_19
+    .long   isr_stub_20
+    .long   isr_stub_21
+    .long   isr_stub_22
+    .long   isr_stub_23
+    .long   isr_stub_24
+    .long   isr_stub_25
+    .long   isr_stub_26
+    .long   isr_stub_27
+    .long   isr_stub_28
+    .long   isr_stub_29
+    .long   isr_stub_30
+    .long   isr_stub_31
 
 
+/*
 # i want one argument that is a ptr to idt
 .global fill_idt
 .type fill_idt, @function
@@ -99,4 +136,4 @@ fill_idt:
 
 message_pf:
     .ascii "#PF\n\0"
-    
+*/

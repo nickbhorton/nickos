@@ -29,6 +29,8 @@ boot_page_table1:
 	.skip 4096
 gdt:
     .skip 4096
+
+.global idt
 idt:
     .skip 4096
 # Further page tables may be required if the kernel grows beyond 3 MiB.
@@ -198,7 +200,7 @@ _start:
     #### IDT ####
     movl $(idt - 0xC0000000), %eax
     # size of idt
-    movw $0x00100, (%eax)
+    movw $0x007FF, (%eax)
     addl $2, %eax
     # location of idt
     movl $(idt - 0xC0000000), (%eax)
@@ -241,10 +243,13 @@ _start:
 
 .section .text
 4:
-	# At this point, paging is fully set up and enabled.
+    /*
+	At this point, paging is fully set up and enabled.
 
-	# Unmap the identity mapping as it is now unnecessary. 
+	Unmap the identity mapping as it is now unnecessary. 
+    if I don't unmap the identity then idt works
 	movl $0, boot_page_directory + 0
+    */
 
 	# Reload crc3 to force a TLB flush so the changes to take effect.
 	movl %cr3, %ecx

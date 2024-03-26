@@ -49,14 +49,6 @@ static inline gdtr_t read_gdtr()
     return result;
 }
 
-static inline gdtr_t read_idtr()
-{
-    gdtr_t result = {0, 0};
-
-    asm("sidt %0" : "=g"(result));
-
-    return result;
-}
 
 static inline uint32_t physical_to_virtual(uint32_t address)
 {

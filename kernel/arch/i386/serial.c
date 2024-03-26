@@ -120,10 +120,10 @@ void serial_print_page(uint32_t address)
 {
     char msg_buf[max_serial_message_size];
     int bytes_written = 0;
-    for (size_t i = 0; i < 1024; i += 16)
+    for (size_t i = 0; i < 4096; i += 16)
     {
         bytes_written = snprintf(
-            msg_buf, max_serial_message_size, "%X %d: ", address + (sizeof(uint32_t) * i), i);
+            msg_buf, max_serial_message_size, "%X %d: ", address + i, i);
         serial_write(msg_buf, bytes_written);
         for (size_t j = 0; j < 16; j++)
         {
