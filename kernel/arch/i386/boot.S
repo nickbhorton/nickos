@@ -198,7 +198,7 @@ _start:
     #### IDT ####
     movl $(idt - 0xC0000000), %eax
     # size of idt
-    movw $0x0008, (%eax)
+    movw $0x00100, (%eax)
     addl $2, %eax
     # location of idt
     movl $(idt - 0xC0000000), (%eax)

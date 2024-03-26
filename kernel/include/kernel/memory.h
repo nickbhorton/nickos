@@ -108,21 +108,4 @@ static inline bool is_page_present(uint16_t dir_index, uint16_t table_index)
     return get_page_table_entry(dir_index, table_index) & 0x00000001;
 }
 
-/*
-static inline void set_page_table_entry(uint16_t dir_index,
-                                        uint16_t table_index,
-                                        uint32_t table_entry)
-{
-    uint32_t table_address = physical_to_virtual(
-        get_page_table_address_p(get_page_directory_entry(dir_index)));
-    uint32_t table_entry_address =
-        table_address + (table_index * sizeof(uint32_t));
-    serial_print("table address: %X\n", table_address);
-    serial_print("table entry address: %X\n", table_entry_address);
-    serial_print("new table entry value: %X\n", table_entry);
-    farpokel(0x10, table_entry_address, table_entry);
-    serial_print("table entry after load: %X\n", peekl(table_entry_address));
-}
-*/
-
 #endif
