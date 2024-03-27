@@ -145,6 +145,12 @@ void serial_print_memory(uint32_t address, uint32_t number_of_bytes, uint32_t by
     }
 }
 
+void serial_print_registers() {
+    char msg_buf[max_serial_message_size];
+    int written = take_register_image_string(msg_buf, max_serial_message_size);
+    serial_write(msg_buf, written);
+}
+
 void serial_print_bits_on(uint32_t val)
 {
     char msg_buf[max_serial_message_size];

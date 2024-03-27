@@ -1,7 +1,8 @@
 .section .text
 .global exception_handler
 exception_handler:
-    pushl $message1
+    call serial_print_registers
+    pushl $message_hlt
     call serial_print
     addl $4, %esp
     cli
@@ -10,14 +11,22 @@ exception_handler:
 .macro isr_err_stub num
 .global isr_stub_\num
 isr_stub_\num:
+    pushl $\num
+    pushl $err_msg
+    call serial_print
     call exception_handler
+    addl $8, %esp
     iret
 .endm
 
 .macro isr_no_err_stub num
 .global isr_stub_\num
 isr_stub_\num:
+    pushl $\num
+    pushl $no_err_msg
+    call serial_print
     call exception_handler
+    addl $8, %esp
     iret
 .endm
 
@@ -90,5 +99,9 @@ isr_stub_table:
     .long   isr_stub_31
 
 .section .data
-message1:
-    .ascii "exception\n\0"
+err_msg:
+    .ascii "EXCEPTION %d\ncode: 0x%X\n\0"
+no_err_msg:
+    .ascii "EXCEPTION %d\n\0"
+message_hlt:
+    .ascii "hlt\n\0"
