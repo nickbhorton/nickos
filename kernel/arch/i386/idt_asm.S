@@ -1,19 +1,4 @@
-.text
-
-/*
-.global page_fault_handle
-.type page_fault_handle, @function
-page_fault_handle:
-    # PF adds error code, this removes it
-    cli
-    hlt
-    addl $4, %esp
-    push $message_pf
-    call serial_print
-    addl $4, %esp
-    iret 
-*/
-
+.section .text
 .global exception_handler
 exception_handler:
     pushl $message1
@@ -21,9 +6,6 @@ exception_handler:
     addl $4, %esp
     cli
     hlt
-
-message1:
-    .ascii "exception\n\0"
 
 .macro isr_err_stub num
 .global isr_stub_\num
@@ -107,33 +89,6 @@ isr_stub_table:
     .long   isr_stub_30
     .long   isr_stub_31
 
-
-/*
-# i want one argument that is a ptr to idt
-.global fill_idt
-.type fill_idt, @function
-fill_idt:
-    movl 4(%esp), %eax
-    movl 8(%esp), %ecx
-    addl %ecx, %eax
-
-    movl $page_fault_handle, %ecx
-    movb %cl, 0(%eax)
-    movb %ch, 1(%eax)
-    shrl $0x10, %ecx
-    movb %cl, 6(%eax)
-    movb %ch, 7(%eax)
-    
-    movb $0x08, 2(%eax)
-    movb $0x0,  3(%eax)
-    # present gate
-    movb $0b10000000, 5(%eax)
-    movl 12(%esp), %ecx
-    orb %cl, 5(%eax)
-    sti
-    ret
-
-
-message_pf:
-    .ascii "#PF\n\0"
-*/
+.section .data
+message1:
+    .ascii "exception\n\0"
