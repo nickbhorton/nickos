@@ -27,5 +27,5 @@ __attribute__((constructor)) void kernel_init(void)
 
 void kernel_main(void)
 {
-    pokeb(0x0, 0);
+    pokel((uint32_t*)0xdead, 0x0);
 }

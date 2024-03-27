@@ -104,7 +104,7 @@ int serial_initialize()
     return 0;
 }
 
-void serial_print(const char *format, ...)
+void serial_printf(const char *format, ...)
 {
     char msg_buf[max_serial_message_size];
 

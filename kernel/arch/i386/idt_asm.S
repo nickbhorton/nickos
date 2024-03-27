@@ -3,7 +3,7 @@
 exception_handler:
     call serial_print_registers
     pushl $message_hlt
-    call serial_print
+    call serial_printf
     addl $4, %esp
     cli
     hlt
@@ -13,7 +13,7 @@ exception_handler:
 isr_stub_\num:
     pushl $\num
     pushl $err_msg
-    call serial_print
+    call serial_printf
     call exception_handler
     addl $8, %esp
     iret
@@ -24,7 +24,7 @@ isr_stub_\num:
 isr_stub_\num:
     pushl $\num
     pushl $no_err_msg
-    call serial_print
+    call serial_printf
     call exception_handler
     addl $8, %esp
     iret

@@ -14,7 +14,7 @@ int serial_write_str(const char *str);
 // returns after 100,000 bytes regardless of len or when \0 is found.
 int serial_write(char *str, size_t len);
 
-void serial_print(const char* format, ...);
+void serial_printf(const char* format, ...);
 void serial_print_memory(uint8_t* address, uint32_t number_of_bytes, uint32_t bytes_each_line);
 void serial_print_bits_on(uint32_t val);
 
