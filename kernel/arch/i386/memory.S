@@ -31,17 +31,20 @@ pokeb:
 .global peekb
 .type peekb, @function
 peekb:
-    mov 4(%esp), %eax
+    movl 4(%esp), %eax
+    movb (%eax), %al
     ret
 
 .global peekw
 .type peekw, @function
 peekw:
-    mov 4(%esp), %eax
+    movl 4(%esp), %eax
+    movw (%eax), %ax
     ret
 
 .global peekl
 .type peekl, @function
 peekl:
-    mov 4(%esp), %eax
+    movl 4(%esp), %eax
+    movl (%eax), %eax
     ret
