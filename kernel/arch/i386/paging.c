@@ -14,6 +14,11 @@ page_dir_entry_t get_pde(uint16_t index)
     page_dir_entry_t* dir_vec = read_cr3();
     return dir_vec[index];
 }
+page_dir_entry_t* get_pde_ptr(uint16_t index)
+{
+    page_dir_entry_t* dir_vec = read_cr3();
+    return &dir_vec[index];
+}
 
 bool pde_ps_test(page_dir_entry_t pde) { return (1 << 7) & pde; }
 
@@ -57,6 +62,12 @@ page_tab_entry_t get_pte(uint16_t dir_index, uint16_t page_tab_index)
     page_dir_entry_t pde = get_pde(dir_index);
     page_tab_entry_t* tab_vec = (page_tab_entry_t*)(pde & 0xFFFFF000);
     return tab_vec[page_tab_index];
+}
+
+page_tab_entry_t* get_pte_ptr(uint16_t dir_index, uint16_t page_tab_index) {
+    page_dir_entry_t pde = get_pde(dir_index);
+    page_tab_entry_t* tab_vec = (page_tab_entry_t*)(pde & 0xFFFFF000);
+    return &tab_vec[page_tab_index];
 }
 
 bool pte_a_test(page_tab_entry_t pte) { return (1 << 5) & pte; }

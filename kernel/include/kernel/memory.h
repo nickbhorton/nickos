@@ -11,7 +11,6 @@ typedef struct __attribute__((packed)) gdtr {
     uint32_t base;
 } gdtr_t;
 
-
 void pokel(uint32_t* address, uint32_t value);
 void pokew(uint16_t* address, uint16_t value);
 void pokeb(uint8_t* address, uint8_t value);

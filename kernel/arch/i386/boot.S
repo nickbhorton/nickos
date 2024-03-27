@@ -156,6 +156,13 @@ gdt_setup:
 .global _start
 .type _start, @function
 _start:
+	# Set up the stack. (before paging is enabled
+	movl $(stack_top - 0xc0000000), %esp
+
+    # push info from grub to stack
+    pushl %eax
+    pushl %ebx
+
 	# Physical address of boot_page_table1.
 	movl $(boot_page_table1 - 0xC0000000), %edi
 	# First address to map is address 0.
@@ -254,9 +261,6 @@ _start:
 	# Reload crc3 to force a TLB flush so the changes to take effect.
 	movl %cr3, %ecx
 	movl %ecx, %cr3
-
-	# Set up the stack.
-	mov $stack_top, %esp
 
     # Call the global constructors
     call _init
