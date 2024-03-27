@@ -3,12 +3,14 @@
 
 int take_register_image(register_image_t* ri)
 {
+    // eax has to go first as funtions return using eax
+    ri->eax = read_eax();
+
     ri->cr0 = read_cr0();
     ri->cr2 = read_cr2();
     ri->cr3 = read_cr3();
     ri->cr4 = read_cr4();
 
-    ri->eax = read_eax();
     ri->ebx = read_ebx();
     ri->ecx = read_ecx();
     ri->edx = read_edx();
