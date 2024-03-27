@@ -1,9 +1,9 @@
 #include <stdarg.h>
-#include <stdint.h>
 #include <stdio.h>
 
 #include <kernel/memory.h>
 #include <kernel/serial.h>
+#include <kernel/register.h>
 
 #define COM1_SERIAL_PORT 0x3f8
 
@@ -117,7 +117,7 @@ void serial_print(const char *format, ...)
     serial_write(msg_buf, written);
 }
 
-void serial_print_memory(uint32_t address, uint32_t number_of_bytes, uint32_t bytes_each_line)
+void serial_print_memory(uint8_t* address, uint32_t number_of_bytes, uint32_t bytes_each_line)
 {
     for (size_t i = 0; i < number_of_bytes; i += bytes_each_line)
     {

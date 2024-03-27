@@ -57,17 +57,17 @@ int register_image_string(const register_image_t* ri, char* restrict str,
         snprintf(str + written, max_str_len - written, "\tedx: 0x%X\n", ri->edx);
 
     written +=
-        snprintf(str + written, max_str_len - written, "\tcs: 0x%X\n", ri->cs);
+        snprintf(str + written, max_str_len - written, "\tcs: 0x%X ", ri->cs);
     written +=
-        snprintf(str + written, max_str_len - written, "\tds: 0x%X\n", ri->ds);
+        snprintf(str + written, max_str_len - written, "ds: 0x%X ", ri->ds);
     written +=
-        snprintf(str + written, max_str_len - written, "\tfs: 0x%X\n", ri->fs);
+        snprintf(str + written, max_str_len - written, "fs: 0x%X ", ri->fs);
     written +=
-        snprintf(str + written, max_str_len - written, "\tgs: 0x%X\n", ri->gs);
+        snprintf(str + written, max_str_len - written, "gs: 0x%X ", ri->gs);
     written +=
-        snprintf(str + written, max_str_len - written, "\tss: 0x%X\n", ri->ss);
+        snprintf(str + written, max_str_len - written, "ss: 0x%X ", ri->ss);
     written +=
-        snprintf(str + written, max_str_len - written, "\tes: 0x%X\n", ri->es);
+        snprintf(str + written, max_str_len - written, "es: 0x%X\n", ri->es);
 
     written += snprintf(str + written, max_str_len - written, "\tflags: 0x%X\n",
                         ri->flags);

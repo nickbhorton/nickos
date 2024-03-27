@@ -27,3 +27,21 @@ pokeb:
     movl 8(%esp), %ecx
     movb %cl, (%eax)
     ret
+    
+.global peekb
+.type peekb, @function
+peekb:
+    mov 4(%esp), %eax
+    ret
+
+.global peekw
+.type peekw, @function
+peekw:
+    mov 4(%esp), %eax
+    ret
+
+.global peekl
+.type peekl, @function
+peekl:
+    mov 4(%esp), %eax
+    ret
