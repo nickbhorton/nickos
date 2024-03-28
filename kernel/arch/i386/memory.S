@@ -1,3 +1,4 @@
+.section .text
 .global pokel 
 .type pokel, @function
 pokel:

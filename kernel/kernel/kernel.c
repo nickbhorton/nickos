@@ -1,3 +1,4 @@
+#include "kernel/gdt.h"
 #include "kernel/paging.h"
 #include <kernel/idt.h>
 #include <kernel/memory.h>
@@ -6,6 +7,7 @@
 #include <kernel/serial.h>
 #include <kernel/tty.h>
 
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -64,4 +66,16 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic)
              */
         }
     }
+    page_dir_entry_t* boot_page_directory = get_pde_ptr(0);
+    serial_printf("boot_page_directory\n");
+    serial_print_memory((uint8_t*)boot_page_directory, 0x1000, 4);
+
+    page_tab_entry_t* boot_page_table_1 = get_pte_ptr(0, 0);
+    serial_printf("boot_page_table1\n");
+    serial_print_memory((uint8_t*)boot_page_table_1, 0x1000, 4);
+
+    gdtr_t gdt = {};
+    read_gdtr(&gdt);
+    serial_printf("gdt: %x, %x\n", gdt.base, gdt.limit);
+    serial_print_memory((uint8_t*)gdt.base, gdt.limit, 8);
 }

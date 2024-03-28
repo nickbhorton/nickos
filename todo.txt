@@ -1,0 +1,15 @@
+1. Continue implementing libc standard functions like printf 
+so that it makes sense to debug functions like print_gdt, 
+print_idt or print_pte inside kernel/gdt.h kernel/idt.h and 
+kernel/paging.h respectivly. 
+2. Figure out what libc functions correspond to page allocation
+and use them as a launchin point to adding functions to manage
+page allocation.
+3. Related research on different kinds of data structures to 
+store imformation about pages, page tables, and the page
+directory.
+4. With the memory map information from GRUB fix the GDT so
+that non available memory issues a segmentation fault. This 
+should be done after boot and in a way that conforms to the
+information given by GRUB (not hardcoded).
+5. Plan memory

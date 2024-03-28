@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
+int _snprintf(char *restrict str, size_t n, const char *restrict format,
+                     va_list parameters);
 /*
  * limitations:
  *      flags not implemented
@@ -15,8 +17,6 @@
  *          d -> int 4 bytes hardcoded
  *          s -> const char *
  */
-int _snprintf(char *restrict str, size_t n, const char *restrict format,
-                     va_list parameters);
 int snprintf(char *restrict str, size_t n, const char *restrict format, ...)
 {
     va_list parameters;

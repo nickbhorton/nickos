@@ -29,13 +29,9 @@ boot_page_table1:
 	.skip 4096
 gdt:
     .skip 4096
-
-.global idt
 idt:
     .skip 4096
-# Further page tables may be required if the kernel grows beyond 3 MiB.
 
-# The kernel entry point.
 .section .multiboot.text, "a"
 .global gdt_flush
 .type gdt_flush, @function
@@ -153,6 +149,7 @@ gdt_setup:
     
     ret
 
+# The kernel entry point.
 .global _start
 .type _start, @function
 _start:
@@ -272,3 +269,5 @@ _start:
 	cli
 1:	hlt
 	jmp 1b
+.section .data
+.long
