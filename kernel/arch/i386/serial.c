@@ -2,12 +2,10 @@
 #include <stdio.h>
 
 #include <kernel/memory.h>
-#include <kernel/serial.h>
 #include <kernel/register.h>
+#include <kernel/serial.h>
 
 #define COM1_SERIAL_PORT 0x3f8
-
-static const size_t max_serial_message_size = 1000;
 
 static inline void outb(uint16_t port, uint8_t val)
 {
@@ -47,7 +45,7 @@ void write_serial_char(char a)
     outb(COM1_SERIAL_PORT, a);
 }
 
-int serial_write_str(const char *str)
+int serial_write_str(const char* str)
 {
     size_t i = 0;
     for (i = 0; i < 1000; i++)
@@ -62,7 +60,7 @@ int serial_write_str(const char *str)
     return i;
 }
 
-int serial_write(char *str, size_t len)
+int serial_write(char* str, size_t len)
 {
     size_t i = 0;
     for (i = 0; i < len && i < 100000; i++)
@@ -104,26 +102,26 @@ int serial_initialize()
     return 0;
 }
 
-void serial_printf(const char *format, ...)
+void serial_printf(const char* format, ...)
 {
-    char msg_buf[max_serial_message_size];
+    char msg_buf[SERIAL_MAX_STR_LEN];
 
     va_list parameters;
     va_start(parameters, format);
-    int written =
-        _snprintf(msg_buf, max_serial_message_size, format, parameters);
+    int written = _snprintf(msg_buf, SERIAL_MAX_STR_LEN, format, parameters);
     va_end(parameters);
 
     serial_write(msg_buf, written);
 }
 
-void serial_print_memory(uint8_t* address, uint32_t number_of_bytes, uint32_t bytes_each_line)
+void serial_print_memory(uint8_t* address, uint32_t number_of_bytes,
+                         uint32_t bytes_each_line)
 {
     for (size_t i = 0; i < number_of_bytes; i += bytes_each_line)
     {
-        char line_buf[max_serial_message_size];
+        char line_buf[SERIAL_MAX_STR_LEN];
         int line_written = 0;
-        line_written += snprintf(line_buf, max_serial_message_size - line_written,
+        line_written += snprintf(line_buf, SERIAL_MAX_STR_LEN - line_written,
                                  "%X %d: ", address + i, i);
         bool found_non_zero_byte = false;
         for (size_t j = 0; j < bytes_each_line; j++)
@@ -134,10 +132,10 @@ void serial_print_memory(uint8_t* address, uint32_t number_of_bytes, uint32_t by
                 found_non_zero_byte = true;
             }
             line_written += snprintf(line_buf + line_written,
-                                     max_serial_message_size, "%X ", cb);
+                                     SERIAL_MAX_STR_LEN, "%X ", cb);
         }
-        line_written +=
-            snprintf(line_buf + line_written, max_serial_message_size - line_written, "\n");
+        line_written += snprintf(line_buf + line_written,
+                                 SERIAL_MAX_STR_LEN - line_written, "\n");
         if (found_non_zero_byte)
         {
             serial_write(line_buf, line_written);
@@ -145,24 +143,25 @@ void serial_print_memory(uint8_t* address, uint32_t number_of_bytes, uint32_t by
     }
 }
 
-void serial_print_registers() {
-    char msg_buf[max_serial_message_size];
-    int written = take_register_image_string(msg_buf, max_serial_message_size);
+void serial_print_registers()
+{
+    char msg_buf[SERIAL_MAX_STR_LEN];
+    int written = take_register_image_string(msg_buf, SERIAL_MAX_STR_LEN);
     serial_write(msg_buf, written);
 }
 
 void serial_print_bits_on(uint32_t val)
 {
-    char msg_buf[max_serial_message_size];
+    char msg_buf[SERIAL_MAX_STR_LEN];
     int bw = 0;
     for (uint32_t i = 0; i < 32; i++)
     {
         if (val & 1 << i)
         {
-            bw = snprintf(msg_buf, max_serial_message_size, "%d ", i);
+            bw = snprintf(msg_buf, SERIAL_MAX_STR_LEN, "%d ", i);
             serial_write(msg_buf, bw);
         }
     }
-    bw = snprintf(msg_buf, max_serial_message_size, "\n");
+    bw = snprintf(msg_buf, SERIAL_MAX_STR_LEN, "\n");
     serial_write(msg_buf, bw);
 }
