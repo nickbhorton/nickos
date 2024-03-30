@@ -106,4 +106,28 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic)
         serial_write_str(error_str);
     }
     serial_write_str("\n");
+
+    // %s string is too long
+    serial_write_str("hello, wor");
+    serial_write_str(" -> ");
+    written = snprintf(str, 10, "hello, %s!", "world");
+    if (written >= 0) {
+        serial_write(str, written);
+    }
+    else {
+        serial_write_str(error_str);
+    }
+    serial_write_str("\n");
+
+    // %s string with a precision
+    serial_write_str("hello, wor!");
+    serial_write_str(" -> ");
+    written = snprintf(str, SERIAL_MAX_STR_LEN, "hello, %.3s!", "world");
+    if (written >= 0) {
+        serial_write(str, written);
+    }
+    else {
+        serial_write_str(error_str);
+    }
+    serial_write_str("\n");
 }

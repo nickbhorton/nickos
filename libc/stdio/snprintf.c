@@ -1,4 +1,3 @@
-#include <limits.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -6,17 +5,22 @@
 
 #define LEFT_JUSTIFIED(x) ((x) & 0x01) // 1 for left, 0 for right
 #define SIGN_ALWAYS(x) ((x) & 0x02)    // if set + sign on pos, - sign always
-#define SIGN_ALIGN(x)                                                          \
-    ((x) & 0x04) // if set and SIGN_ALWAYS not set add space to pos nums
-#define ALT_FORM(x) ((x) & 0x08)    // see c docs
+#define SIGN_ALIGN(x) ((x) & 0x04)     // if set and add space to pos nums
+#define ALT_FORM(x) ((x) & 0x08)       // see c docs
 #define LEADING_ZEROS ((x) & 0x10)) // if set pad with zeros in certain cases
 
 typedef unsigned char fprintf_flags;
 
 static char int_to_digit_char(int digit);
-static char uint_to_digit_char(unsigned int digit);
+// assuming that char is a digit char!!!!!
+static int digit_char_to_int(char end);
+
 static char uint_to_lc_hexdigit_char(unsigned int digit);
 static char uint_to_uc_hexdigit_char(unsigned int digit);
+
+static bool is_digit(char c);
+
+static int parse_uint(const char* restrict str);
 
 int _snprintf(char* restrict str, size_t n, const char* restrict format,
               va_list parameters);
@@ -62,22 +66,75 @@ int _snprintf(char* restrict str, size_t n, const char* restrict format,
             format++;
             continue;
         }
+
         fprintf_flags flags = 0;
 
-        const char* conversion_specification_start = format;
+        const char* format_specification_start = format;
         format++;
-        bool more_conversion_spec = true;
-        while (*format != '\0' && more_conversion_spec)
+        bool more_format_spec = true;
+        bool before_period = true;
+        // -1 means no minumum_field_width has been specified
+        int minumum_field_width = -1;
+        int precision = -1;
+        while (*format != '\0' && more_format_spec)
         {
             switch (*format)
             {
                 case '%':
                 {
-                    written += snprint(str, written, 1, n, "%");
                     format++;
-                    more_conversion_spec = false;
+                    written += snprint(str, written, 1, n, "%");
+                    more_format_spec = false;
                     break;
                 }
+                case '.':
+                {
+                    format++;
+                    before_period = false;
+                    break;
+                }
+
+                // conversion specifier
+                // these signal the end of a format specification
+                case 's':
+                {
+                    format++;
+                    more_format_spec = false;
+                    const char* va_arg_string = va_arg(parameters, const char*);
+                    size_t len = strlen(va_arg_string);
+                    if (precision < 0)
+                    {
+                        written += snprint(str, written, len, n, va_arg_string);
+                    }
+                    else
+                    {
+                        written += snprint(str, written, precision, n, va_arg_string);
+                    }
+                    break;
+                }
+
+                // minumum field width and precision
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                {
+                    if (before_period)
+                    {
+                        minumum_field_width = parse_uint(format);
+                    }
+                    else
+                    {
+                        precision = parse_uint(format);
+                    }
+                    break;
+                }
+
                 default:
                     return -1;
             }
@@ -86,11 +143,40 @@ int _snprintf(char* restrict str, size_t n, const char* restrict format,
     return written;
 }
 
-static char int_to_digit_char(int digit) { return (char)((digit + 48) % 128); }
-static char uint_to_digit_char(unsigned int digit)
+static bool is_digit(char c) { return c >= 48 && c <= 57; }
+
+// assuming that the zeroth index of char* str is the first digit
+// if zeroth index of char* str is not a digit returns 0
+// str is moved to the next non digit character
+static int parse_uint(const char* restrict str)
 {
-    return (char)((digit + 48) % 128);
+    const char* restrict begining = str;
+    const char* restrict end = str;
+    while (is_digit(*end))
+    {
+        str++;
+        end++;
+    }
+    if (begining == end)
+    {
+        return 0;
+    }
+    // str is now pointing at the next non digit char
+    // end ptr is now pointing at the first non ditit char
+    end--;
+    unsigned int result = 0;
+    unsigned int mult = 1;
+    for (; end >= begining; end--)
+    {
+        result += digit_char_to_int(*end);
+        mult *= 10;
+    }
+    return result;
 }
+
+static char int_to_digit_char(int digit) { return (char)((digit + 48) % 128); }
+static int digit_char_to_int(char end) { return end - 48; }
+
 static char uint_to_lc_hexdigit_char(unsigned int digit)
 {
     switch (digit)
