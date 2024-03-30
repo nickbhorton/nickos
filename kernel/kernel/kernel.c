@@ -1,3 +1,4 @@
+#include "kernel/debug_print.h"
 #include "kernel/gdt.h"
 #include "kernel/paging.h"
 #include <kernel/idt.h>
@@ -38,7 +39,6 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic)
     page_tab_entry_t* pte_ptr =
         get_pte_ptr(((uint32_t)mbd) >> 22, ((uint32_t)mbd) >> 12);
     *pte_ptr = ((uint32_t)mbd) | 0x3;
-    serial_printf("mbd flags %X\n", mbd->flags);
 
     /* Check bit 6 to see if we have a valid memory map */
     if (!(mbd->flags >> 6 & 0x1))
@@ -66,13 +66,28 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic)
              */
         }
     }
-    page_dir_entry_t* boot_page_directory = get_pde_ptr(0);
     serial_printf("boot_page_directory\n");
-    serial_print_memory((uint8_t*)boot_page_directory, 0x1000, 4);
+    for (size_t i = 0; i < 0x0400; i++)
+    {
+        page_dir_entry_t* boot_page_directory_entry = get_pde_ptr(i);
+        // if present flag set
+        if (pde_p_test(*boot_page_directory_entry))
+        {
+            serial_printf("0x%x -> ", (uint32_t)boot_page_directory_entry);
+            print_pde(*boot_page_directory_entry);
+        }
+    }
 
-    page_tab_entry_t* boot_page_table_1 = get_pte_ptr(0, 0);
     serial_printf("boot_page_table1\n");
-    serial_print_memory((uint8_t*)boot_page_table_1, 0x1000, 4);
+    for (size_t i = 0; i < 0x0400; i++)
+    {
+        page_tab_entry_t* boot_page_table_1_entry = get_pte_ptr(0, i);
+        if (pte_p_test(*boot_page_table_1_entry))
+        {
+            serial_printf("0x%x -> ", (uint32_t)boot_page_table_1_entry);
+            print_pte(*boot_page_table_1_entry);
+        }
+    }
 
     gdtr_t gdt = {};
     read_gdtr(&gdt);
