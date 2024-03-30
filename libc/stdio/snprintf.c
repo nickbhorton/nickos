@@ -20,17 +20,6 @@ static char uint_to_uc_hexdigit_char(unsigned int digit);
 
 int _snprintf(char* restrict str, size_t n, const char* restrict format,
               va_list parameters);
-/*
- * limitations:
- *      flags not implemented
- *      optional field width not implemented
- *      optional precision not implemented
- *      optional length modifier not implemented
- *      only conversion specifier character implemented
- *          c -> char
- *          d -> int 4 bytes hardcoded
- *          s -> const char *
- */
 int snprintf(char* restrict str, size_t n, const char* restrict format, ...)
 {
     va_list parameters;
@@ -56,271 +45,45 @@ int snprint(char* restrict dest, size_t start, size_t n, size_t max_n,
     return src_index;
 }
 
-int handle_conversion_specifier(char conversion_specifier, size_t* written,
-                                const char* restrict format, char* restrict str,
-                                va_list parameters, const char* format_begun_at,
-                                size_t n, int maxrem);
-
+/*
+ * @returns [0,INT_MAX] -> number of char written
+ *          -1          -> unimplemented
+ */
 int _snprintf(char* restrict str, size_t n, const char* restrict format,
               va_list parameters)
 {
     size_t written = 0;
 
-    while (*format != '\0')
+    while (*format != '\0' && written < n)
     {
-        size_t maxrem = INT_MAX - written;
-
-        // print normal character sequence
-        if (format[0] != '%' || format[1] == '%')
+        if (format[0] != '%')
         {
-            if (format[0] == '%')
-            {
-                format++;
-            }
-            size_t amount = 1;
-            while (format[amount] && format[amount] != '%')
-            {
-                amount++;
-            }
-            if (maxrem < amount)
-            {
-                // TODO: Set errno to EOVERFLOW.
-                return -1;
-            }
-            written += snprint(str, written, amount, n, format);
-            format += amount;
+            written += snprint(str, written, 1, n, format);
+            format++;
             continue;
         }
+        fprintf_flags flags = 0;
 
-        const char* format_begun_at = format++;
-
-        switch (*format)
+        const char* conversion_specification_start = format;
+        format++;
+        bool more_conversion_spec = true;
+        while (*format != '\0' && more_conversion_spec)
         {
-            // conversion specifiers
-            case 'd':
-            case 'i':
-            case 'u':
-            case 'x':
-            case 'X':
-            case 'c':
-            case 's':
+            switch (*format)
             {
-                int ret = handle_conversion_specifier(
-                    *format, &written, format, str, parameters, format_begun_at,
-                    n, maxrem);
-                if (ret != 0)
+                case '%':
                 {
-                    return ret;
+                    written += snprint(str, written, 1, n, "%");
+                    format++;
+                    more_conversion_spec = false;
+                    break;
                 }
-            }
-            break;
-            // unimplemented converion specifiers
-            case 'f':
-            case 'F':
-            case 'e':
-            case 'E':
-            case 'g':
-            case 'G':
-            case 'a':
-            case 'A':
-            case 'p':
-            case 'n':
-            default:
-            {
-                return -1;
-                break;
+                default:
+                    return -1;
             }
         }
     }
     return written;
-}
-
-int handle_conversion_specifier(char conversion_specifier, size_t* written,
-                                const char* restrict format, char* restrict str,
-                                va_list parameters, const char* format_begun_at,
-                                size_t n, int maxrem)
-{
-    switch (conversion_specifier)
-    {
-        case 'c':
-        {
-            format++;
-            char c = (char)va_arg(parameters, int /* char promotes to int */);
-            if (!maxrem)
-            {
-                // TODO: Set errno to EOVERFLOW.
-                return -1;
-            }
-            *written += snprint(str, *written, 1, n, &c);
-            break;
-        }
-        case 's':
-        {
-            format++;
-            const char* va_arg_string = va_arg(parameters, const char*);
-            size_t len = strlen(va_arg_string);
-            if (maxrem < len)
-            {
-                // TODO: Set errno to EOVERFLOW.
-                return -1;
-            }
-            *written += snprint(str, *written, len, n, va_arg_string);
-            break;
-        }
-        case 'i':
-        case 'd':
-        {
-            // 2147483647 is 10
-            static const size_t max_digits = 10;
-            char digit_string[max_digits];
-            memset(digit_string, 0, max_digits);
-            // index starting at last digit
-            int digit_string_index = max_digits - 1;
-
-            format++;
-            int number = va_arg(parameters, int);
-            if (!maxrem)
-            {
-                // TODO: Set errno to EOVERFLOW.
-                return -1;
-            }
-            // lol
-            if (number == -2147483648)
-            {
-                static const char* digit_string = "-2147483648";
-                *written += snprint(str, *written, strlen(digit_string), n,
-                                    digit_string);
-            }
-            else if (number == 0)
-            {
-                static const char* digit_string = "0";
-                *written += snprint(str, *written, strlen(digit_string), n,
-                                    digit_string);
-            }
-            else
-            {
-                if (number < 0)
-                {
-                    // TODO: test this
-                    number = -number;
-                    static const char* digit_string = "-";
-                    *written += snprint(str, *written, strlen(digit_string), n,
-                                        digit_string);
-                }
-                while (number != 0)
-                {
-                    digit_string[digit_string_index] =
-                        int_to_digit_char(number % 10);
-                    digit_string_index--;
-                    number /= 10;
-                }
-                const int size_of_digit_string =
-                    max_digits - digit_string_index - 1;
-                *written += snprint(str, *written, size_of_digit_string, n,
-                                    digit_string + digit_string_index + 1);
-            }
-            break;
-        }
-        case 'u':
-        {
-            // 2147483648 is 10
-            static const size_t max_digits = 10;
-            char digit_string[max_digits];
-            memset(digit_string, 0, max_digits);
-            // index starting at last digit
-            int digit_string_index = max_digits - 1;
-
-            format++;
-            unsigned int number = va_arg(parameters, unsigned int);
-            if (!maxrem)
-            {
-                // TODO: Set errno to EOVERFLOW.
-                return -1;
-            }
-            if (number == 0)
-            {
-                static const char* digit_string = "0";
-                *written += snprint(str, *written, strlen(digit_string), n,
-                                    digit_string);
-            }
-            else
-            {
-                while (number != 0)
-                {
-                    digit_string[digit_string_index] =
-                        uint_to_digit_char(number % 10);
-                    digit_string_index--;
-                    number /= 10;
-                }
-                const int size_of_digit_string =
-                    max_digits - digit_string_index - 1;
-                *written += snprint(str, *written, size_of_digit_string, n,
-                                    digit_string + digit_string_index + 1);
-            }
-            break;
-        }
-        case 'x':
-        case 'X':
-        {
-            // 2147483648 is 80000000 is hex so 8 digits
-            static const size_t max_digits = 8;
-            char digit_string[max_digits];
-            memset(digit_string, 0, max_digits);
-            // index starting at last digit
-            int digit_string_index = max_digits - 1;
-
-            format++;
-            unsigned int number = va_arg(parameters, unsigned int);
-            if (!maxrem)
-            {
-                // TODO: Set errno to EOVERFLOW.
-                return -1;
-            }
-            if (number == 0)
-            {
-                static const char* digit_string = "0";
-                *written += snprint(str, *written, strlen(digit_string), n,
-                                    digit_string);
-            }
-            else
-            {
-                while (number != 0)
-                {
-                    if (*format == 'x')
-                    {
-                        digit_string[digit_string_index] =
-                            uint_to_lc_hexdigit_char(number % 16);
-                    }
-                    else
-                    {
-                        digit_string[digit_string_index] =
-                            uint_to_uc_hexdigit_char(number % 16);
-                    }
-                    digit_string_index--;
-                    number /= 16;
-                }
-                const int size_of_digit_string =
-                    max_digits - digit_string_index - 1;
-                *written += snprint(str, *written, size_of_digit_string, n,
-                                    digit_string + digit_string_index + 1);
-            }
-            break;
-        }
-        default:
-        {
-            format = format_begun_at;
-            size_t len = strlen(format);
-            if (maxrem < len)
-            {
-                // TODO: Set errno to EOVERFLOW.
-                return -1;
-            }
-            *written += snprint(str, *written, len, n, format);
-            format += len;
-            break;
-        }
-    }
-    return 0;
 }
 
 static char int_to_digit_char(int digit) { return (char)((digit + 48) % 128); }

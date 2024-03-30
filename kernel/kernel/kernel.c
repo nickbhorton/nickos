@@ -30,52 +30,80 @@ __attribute__((constructor)) void kernel_init(void)
 
 void kernel_main(multiboot_info_t* mbd, unsigned int magic)
 {
-    if (magic != MULTIBOOT_BOOTLOADER_MAGIC)
-    {
-        serial_printf("magic number was not the multiboot magic number\n");
+    char str[SERIAL_MAX_STR_LEN];
+    const char* error_str = "not implemented";
+
+    // regular print string
+    serial_write_str("hello world!");
+    serial_write_str(" -> ");
+    int written = snprintf(str, SERIAL_MAX_STR_LEN, "hello, world!");
+    if (written >= 0) {
+        serial_write(str, written);
     }
-    // identity maping the mbd
-    page_tab_entry_t* pte_ptr =
-        get_pte_ptr(((uint32_t)mbd) >> 22, ((uint32_t)mbd) >> 12);
-    *pte_ptr = ((uint32_t)mbd) | 0x3;
-    serial_printf("mbd flags %X\n", mbd->flags);
-
-    /* Check bit 6 to see if we have a valid memory map */
-    if (!(mbd->flags >> 6 & 0x1))
-    {
-        serial_printf("invalid memory map given by GRUB bootloader");
+    else {
+        serial_write_str(error_str);
     }
-    /* Loop through the memory map and display the values */
-    uint32_t i;
-    for (i = 0; i < mbd->mmap_length; i += sizeof(multiboot_memory_map_t))
-    {
-        multiboot_memory_map_t* mmmt =
-            (multiboot_memory_map_t*)(mbd->mmap_addr + i);
-        serial_printf("size: %x | addr_l %x | addr_h %x | len_l %x | len_h "
-                      "%x | type %x\n",
-                      mmmt->size, mmmt->addr_l, mmmt->addr_h, mmmt->len_l,
-                      mmmt->len_h, mmmt->type);
+    serial_write_str("\n");
 
-        if (mmmt->type == MULTIBOOT_MEMORY_AVAILABLE)
-        {
-            /*
-             * Do something with this memory block!
-             * BE WARNED that some of memory shown as availiable is actually
-             * actively being used by the kernel! You'll need to take that
-             * into account before writing to memory!
-             */
-        }
+    // n less that string given
+    serial_write_str("he");
+    serial_write_str(" -> ");
+    written = snprintf(str, 2, "hello, world!");
+    if (written >= 0) {
+        serial_write(str, written);
     }
-    page_dir_entry_t* boot_page_directory = get_pde_ptr(0);
-    serial_printf("boot_page_directory\n");
-    serial_print_memory((uint8_t*)boot_page_directory, 0x1000, 4);
+    else {
+        serial_write_str(error_str);
+    }
+    serial_write_str("\n");
 
-    page_tab_entry_t* boot_page_table_1 = get_pte_ptr(0, 0);
-    serial_printf("boot_page_table1\n");
-    serial_print_memory((uint8_t*)boot_page_table_1, 0x1000, 4);
+    // string length of one
+    serial_write_str("h");
+    serial_write_str(" -> ");
+    written = snprintf(str, 10, "h");
+    if (written >= 0) {
+        serial_write(str, written);
+    }
+    else {
+        serial_write_str(error_str);
+    }
+    serial_write_str("\n");
 
-    gdtr_t gdt = {};
-    read_gdtr(&gdt);
-    serial_printf("gdt: %x, %x\n", gdt.base, gdt.limit);
-    serial_print_memory((uint8_t*)gdt.base, gdt.limit, 8);
+    // % of string length one with no specifiers need to put this on a page and
+    // seg boundry and make sure it does not page or seg fault.
+    serial_write_str("<null>");
+    serial_write_str(" -> ");
+    written = snprintf(str, 10, "%");
+    if (written >= 0) {
+        serial_write(str, written);
+    }
+    else {
+        serial_write_str(error_str);
+    }
+    serial_write_str("\n");
+
+    
+    // most basic format spec %%
+    serial_write_str("%");
+    serial_write_str(" -> ");
+    written = snprintf(str, 10, "%%");
+    if (written >= 0) {
+        serial_write(str, written);
+    }
+    else {
+        serial_write_str(error_str);
+    }
+    serial_write_str("\n");
+
+    // %s string format specifier
+    serial_write_str("hello, world!");
+    serial_write_str(" -> ");
+    written = snprintf(str, SERIAL_MAX_STR_LEN, "hello, %s!", "world");
+    if (written >= 0) {
+        serial_write(str, written);
+    }
+    else {
+        serial_write_str(error_str);
+    }
+    serial_write_str("\n");
 }
