@@ -278,4 +278,116 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic)
         serial_write_str(error_str);
     }
     serial_write_str("\n");
+
+    // basic %d
+    serial_write_str("127");
+    serial_write_str(" -> ");
+    written = snprintf(str, SERIAL_MAX_STR_LEN, "%d", 127);
+    if (written >= 0)
+    {
+        serial_write(str, written);
+    }
+    else
+    {
+        serial_write_str(error_str);
+    }
+    serial_write_str("\n");
+
+    // max %d
+    serial_write_str("2147483647");
+    serial_write_str(" -> ");
+    written = snprintf(str, SERIAL_MAX_STR_LEN, "%d", 2147483647);
+    if (written >= 0)
+    {
+        serial_write(str, written);
+    }
+    else
+    {
+        serial_write_str(error_str);
+    }
+    serial_write_str("\n");
+
+    // min %d
+    serial_write_str("-2147483648");
+    serial_write_str(" -> ");
+    written = snprintf(str, SERIAL_MAX_STR_LEN, "%d", -2147483648);
+    if (written >= 0)
+    {
+        serial_write(str, written);
+    }
+    else
+    {
+        serial_write_str(error_str);
+    }
+    serial_write_str("\n");
+
+    // %d 0
+    serial_write_str("0");
+    serial_write_str(" -> ");
+    written = snprintf(str, SERIAL_MAX_STR_LEN, "%d", 0);
+    if (written >= 0)
+    {
+        serial_write(str, written);
+    }
+    else
+    {
+        serial_write_str(error_str);
+    }
+    serial_write_str("\n");
+
+    // %d negitive number
+    serial_write_str("-127");
+    serial_write_str(" -> ");
+    written = snprintf(str, SERIAL_MAX_STR_LEN, "%d", -127);
+    if (written >= 0)
+    {
+        serial_write(str, written);
+    }
+    else
+    {
+        serial_write_str(error_str);
+    }
+    serial_write_str("\n");
+
+    // %d positive number with sign always
+    serial_write_str("+127");
+    serial_write_str(" -> ");
+    written = snprintf(str, SERIAL_MAX_STR_LEN, "%+d", 127);
+    if (written >= 0)
+    {
+        serial_write(str, written);
+    }
+    else
+    {
+        serial_write_str(error_str);
+    }
+    serial_write_str("\n");
+
+    // %d positive number with sign align
+    serial_write_str(" 127");
+    serial_write_str(" -> ");
+    written = snprintf(str, SERIAL_MAX_STR_LEN, "% d", 127);
+    if (written >= 0)
+    {
+        serial_write(str, written);
+    }
+    else
+    {
+        serial_write_str(error_str);
+    }
+    serial_write_str("\n");
+
+    // %d positive number with sign align and always
+    serial_write_str("+127");
+    serial_write_str(" -> ");
+    written = snprintf(str, SERIAL_MAX_STR_LEN, "% +d", 127);
+    if (written >= 0)
+    {
+        serial_write(str, written);
+    }
+    else
+    {
+        serial_write_str(error_str);
+    }
+    serial_write_str("\n");
 }

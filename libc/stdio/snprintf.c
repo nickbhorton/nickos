@@ -1,7 +1,11 @@
+#include <stdalign.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+
+// -2,147,483,648 -> 14
+#define MAX_INT32_STRING_LEN 14
 
 #define LEFT_JUSTIFIED(x) ((x) & 0x01) // 1 for left, 0 for right
 #define SIGN_ALWAYS(x) ((x) & 0x02)    // if set + sign on pos, - sign always
@@ -14,6 +18,9 @@ typedef unsigned char fprintf_flags;
 static char int_to_digit_char(int digit);
 // assuming that char is a digit char!!!!!
 static int digit_char_to_int(char end);
+
+// @returns number of char put into dest
+static int int32_to_string(int n, char* dest, bool plus_sign, bool sign_align);
 
 static char uint_to_lc_hexdigit_char(unsigned int digit);
 static char uint_to_uc_hexdigit_char(unsigned int digit);
@@ -102,6 +109,34 @@ int _snprintf(char* restrict str, size_t n, const char* restrict format,
                     flags |= 0x1;
                     break;
                 }
+                case '+':
+                {
+                    format++;
+                    // sign always
+                    flags |= 0x2;
+                    break;
+                }
+                case ' ':
+                {
+                    format++;
+                    // align always
+                    flags |= 0x4;
+                    break;
+                }
+                case '#':
+                {
+                    format++;
+                    // alternate form
+                    flags |= 0x8;
+                    break;
+                }
+                case '0':
+                {
+                    format++;
+                    // leading zeros
+                    flags |= 0x10;
+                    break;
+                }
 
                 // conversion specifier
                 // these signal the end of a format specification
@@ -138,6 +173,18 @@ int _snprintf(char* restrict str, size_t n, const char* restrict format,
                     {
                         written += snprint(str, written, len, n, va_arg_string);
                     }
+                    break;
+                }
+
+                case 'd':
+                case 'i':
+                {
+                    format++;
+                    more_format_spec = false;
+                    int va_arg_int = va_arg(parameters, int);
+                    static char int_string[MAX_INT32_STRING_LEN];
+                    int len = int32_to_string(va_arg_int, int_string, SIGN_ALWAYS(flags), SIGN_ALIGN(flags));
+                    written += snprint(str, written, len, n, int_string);
                     break;
                 }
 
@@ -206,6 +253,68 @@ static int parse_uint(const char* restrict str, int* digit_size)
 
 static char int_to_digit_char(int digit) { return (char)((digit + 48) % 128); }
 static int digit_char_to_int(char end) { return end - 48; }
+
+static int int32_to_string(int n, char* dest, bool plus_sign, bool sign_align)
+{
+    // cases that are easier to solve with string constants
+    if (n == 0)
+    {
+        dest[0] = '0';
+        return 1;
+    }
+    if (n == -2147483648)
+    {
+        const char* min_int32 = "-2147483648";
+        int len = strlen(min_int32);
+        for (int i = 0; i < len; i++)
+        {
+            dest[i] = min_int32[i];
+        }
+        return len;
+    }
+
+    bool neg = false;
+    if (n < 0)
+    {
+        neg = true;
+        n = -n;
+    }
+
+    static char backward[MAX_INT32_STRING_LEN];
+    int i = 0;
+    while (n > 0)
+    {
+        backward[i] = int_to_digit_char(n % 10);
+        n /= 10;
+        i++;
+    }
+    if (neg)
+    {
+        backward[i] = '-';
+        i++;
+    }
+    else if (plus_sign) {
+        backward[i] = '+';
+        i++;
+    }
+    else if (sign_align)
+    {
+        backward[i] = ' ';
+        i++;
+    }
+
+    if (i > 0)
+    {
+        --i;
+        int j = 0;
+        for (; i >= 0; i--, j++)
+        {
+            dest[j] = backward[i];
+        }
+        return j;
+    }
+    return 0;
+}
 
 static char uint_to_lc_hexdigit_char(unsigned int digit)
 {
