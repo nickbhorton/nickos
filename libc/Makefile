@@ -40,7 +40,7 @@ FREEOBJS:=\
 	string/memset.o    \
 	string/memcpy.o    \
 	stdlib/abort.o     \
-	stdio/snprintf.o     \
+	stdio/snprintf.o   \
 	stdio/putchar.o    \
 
 

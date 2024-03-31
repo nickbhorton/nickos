@@ -4,8 +4,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#define MAX_INT32_STRING_LEN 2048
 // -2,147,483,648 -> 14
-#define MAX_INT32_STRING_LEN 14
+#define MAX_INT32_DIGIT_LEN 14
 
 #define LEFT_JUSTIFIED(x) ((x) & 0x01) // 1 for left, 0 for right
 #define SIGN_ALWAYS(x) ((x) & 0x02)    // if set + sign on pos, - sign always
@@ -20,7 +21,8 @@ static char int_to_digit_char(int digit);
 static int digit_char_to_int(char end);
 
 // @returns number of char put into dest
-static int int32_to_string(int n, char* dest, bool plus_sign, bool sign_align);
+static int int32_to_string(int n, char* dest, int min_widht, bool plus_sign,
+                           bool sign_align);
 
 static char uint_to_lc_hexdigit_char(unsigned int digit);
 static char uint_to_uc_hexdigit_char(unsigned int digit);
@@ -43,7 +45,7 @@ int snprintf(char* restrict str, size_t n, const char* restrict format, ...)
 }
 
 // needs to return however many bytes are written to dest
-int snprint(char* restrict dest, size_t start, size_t n, size_t max_n,
+size_t snprint(char* restrict dest, size_t start, size_t n, size_t max_n,
             const char* restrict src)
 {
     size_t src_index = 0;
@@ -59,10 +61,13 @@ int snprint(char* restrict dest, size_t start, size_t n, size_t max_n,
 /*
  * @returns [0,INT_MAX] -> number of char written
  *          -1          -> unimplemented
+ *          -2          -> overflow
  */
 int _snprintf(char* restrict str, size_t n, const char* restrict format,
               va_list parameters)
 {
+    // space for the \0 char at the end
+    n = n-1;
     size_t written = 0;
 
     while (*format != '\0' && written < n)
@@ -182,9 +187,49 @@ int _snprintf(char* restrict str, size_t n, const char* restrict format,
                     format++;
                     more_format_spec = false;
                     int va_arg_int = va_arg(parameters, int);
-                    static char int_string[MAX_INT32_STRING_LEN];
-                    int len = int32_to_string(va_arg_int, int_string, SIGN_ALWAYS(flags), SIGN_ALIGN(flags));
-                    written += snprint(str, written, len, n, int_string);
+                    // +1 for the sign
+                    static char int_string[MAX_INT32_STRING_LEN + 1];
+                    int len = 0;
+                    if (precision > 0 && precision < 2048)
+                    {
+                        len = int32_to_string(va_arg_int, int_string, precision,
+                                              SIGN_ALWAYS(flags),
+                                              SIGN_ALIGN(flags));
+                    }
+                    else if (precision < 0)
+                    {
+                        len = int32_to_string(va_arg_int, int_string, 1,
+                                              SIGN_ALWAYS(flags),
+                                              SIGN_ALIGN(flags));
+                    }
+                    else
+                    {
+                        // overflow
+                        return -2;
+                    }
+                    if (field_width >= 0)
+                    {
+                        int num_extra_chars = field_width - len;
+                        if (!LEFT_JUSTIFIED(flags))
+                        {
+                            for (int i = 0; i < num_extra_chars; i++)
+                            {
+                                written += snprint(str, written, 1, n, " ");
+                            }
+                        }
+                        written += snprint(str, written, len, n, int_string);
+                        if (LEFT_JUSTIFIED(flags))
+                        {
+                            for (int i = 0; i < num_extra_chars; i++)
+                            {
+                                written += snprint(str, written, 1, n, " ");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        written += snprint(str, written, len, n, int_string);
+                    }
                     break;
                 }
 
@@ -217,6 +262,9 @@ int _snprintf(char* restrict str, size_t n, const char* restrict format,
             }
         }
     }
+    // write a \0 at the end
+    snprint(str, written, 1, n+1, "\0");
+    // returns length of written, not including \0
     return written;
 }
 
@@ -254,7 +302,8 @@ static int parse_uint(const char* restrict str, int* digit_size)
 static char int_to_digit_char(int digit) { return (char)((digit + 48) % 128); }
 static int digit_char_to_int(char end) { return end - 48; }
 
-static int int32_to_string(int n, char* dest, bool plus_sign, bool sign_align)
+static int int32_to_string(int n, char* dest, int precision, bool plus_sign,
+                           bool sign_align)
 {
     // cases that are easier to solve with string constants
     if (n == 0)
@@ -280,7 +329,7 @@ static int int32_to_string(int n, char* dest, bool plus_sign, bool sign_align)
         n = -n;
     }
 
-    static char backward[MAX_INT32_STRING_LEN];
+    static char backward[MAX_INT32_STRING_LEN + 1];
     int i = 0;
     while (n > 0)
     {
@@ -288,12 +337,20 @@ static int int32_to_string(int n, char* dest, bool plus_sign, bool sign_align)
         n /= 10;
         i++;
     }
+
+    while (i < precision)
+    {
+        backward[i] = '0';
+        i++;
+    }
+
     if (neg)
     {
         backward[i] = '-';
         i++;
     }
-    else if (plus_sign) {
+    else if (plus_sign)
+    {
         backward[i] = '+';
         i++;
     }
