@@ -20,7 +20,7 @@ static char uint_to_uc_hexdigit_char(unsigned int digit);
 
 static bool is_digit(char c);
 
-static int parse_uint(const char* restrict str);
+static int parse_uint(const char* restrict str, int* digit_size);
 
 int _snprintf(char* restrict str, size_t n, const char* restrict format,
               va_list parameters);
@@ -73,8 +73,8 @@ int _snprintf(char* restrict str, size_t n, const char* restrict format,
         format++;
         bool more_format_spec = true;
         bool before_period = true;
-        // -1 means no minumum_field_width has been specified
-        int minumum_field_width = -1;
+        // -1 means no field_width has been specified
+        int field_width = -1;
         int precision = -1;
         while (*format != '\0' && more_format_spec)
         {
@@ -94,6 +94,15 @@ int _snprintf(char* restrict str, size_t n, const char* restrict format,
                     break;
                 }
 
+                // flags
+                case '-':
+                {
+                    format++;
+                    // left justified
+                    flags |= 0x1;
+                    break;
+                }
+
                 // conversion specifier
                 // these signal the end of a format specification
                 case 's':
@@ -102,18 +111,37 @@ int _snprintf(char* restrict str, size_t n, const char* restrict format,
                     more_format_spec = false;
                     const char* va_arg_string = va_arg(parameters, const char*);
                     size_t len = strlen(va_arg_string);
-                    if (precision < 0)
+                    if (precision > 0 && precision < len)
                     {
+                        len = precision;
+                    }
+                    if (field_width >= 0)
+                    {
+                        int num_extra_chars = field_width - len;
+                        if (!LEFT_JUSTIFIED(flags))
+                        {
+                            for (int i = 0; i < num_extra_chars; i++)
+                            {
+                                written += snprint(str, written, 1, n, " ");
+                            }
+                        }
                         written += snprint(str, written, len, n, va_arg_string);
+                        if (LEFT_JUSTIFIED(flags))
+                        {
+                            for (int i = 0; i < num_extra_chars; i++)
+                            {
+                                written += snprint(str, written, 1, n, " ");
+                            }
+                        }
                     }
                     else
                     {
-                        written += snprint(str, written, precision, n, va_arg_string);
+                        written += snprint(str, written, len, n, va_arg_string);
                     }
                     break;
                 }
 
-                // minumum field width and precision
+                // field width and precision
                 case '1':
                 case '2':
                 case '3':
@@ -124,14 +152,16 @@ int _snprintf(char* restrict str, size_t n, const char* restrict format,
                 case '8':
                 case '9':
                 {
+                    int digit_size = 0;
                     if (before_period)
                     {
-                        minumum_field_width = parse_uint(format);
+                        field_width = parse_uint(format, &digit_size);
                     }
                     else
                     {
-                        precision = parse_uint(format);
+                        precision = parse_uint(format, &digit_size);
                     }
+                    format += digit_size;
                     break;
                 }
 
@@ -148,14 +178,14 @@ static bool is_digit(char c) { return c >= 48 && c <= 57; }
 // assuming that the zeroth index of char* str is the first digit
 // if zeroth index of char* str is not a digit returns 0
 // str is moved to the next non digit character
-static int parse_uint(const char* restrict str)
+static int parse_uint(const char* restrict str, int* digit_size)
 {
     const char* restrict begining = str;
     const char* restrict end = str;
     while (is_digit(*end))
     {
-        str++;
-        end++;
+        ++end;
+        ++(*digit_size);
     }
     if (begining == end)
     {
@@ -163,12 +193,12 @@ static int parse_uint(const char* restrict str)
     }
     // str is now pointing at the next non digit char
     // end ptr is now pointing at the first non ditit char
-    end--;
+    --end;
     unsigned int result = 0;
     unsigned int mult = 1;
-    for (; end >= begining; end--)
+    for (; end >= begining; --end)
     {
-        result += digit_char_to_int(*end);
+        result += digit_char_to_int(*end) * mult;
         mult *= 10;
     }
     return result;

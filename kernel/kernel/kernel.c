@@ -37,10 +37,12 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic)
     serial_write_str("hello world!");
     serial_write_str(" -> ");
     int written = snprintf(str, SERIAL_MAX_STR_LEN, "hello, world!");
-    if (written >= 0) {
+    if (written >= 0)
+    {
         serial_write(str, written);
     }
-    else {
+    else
+    {
         serial_write_str(error_str);
     }
     serial_write_str("\n");
@@ -49,10 +51,12 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic)
     serial_write_str("he");
     serial_write_str(" -> ");
     written = snprintf(str, 2, "hello, world!");
-    if (written >= 0) {
+    if (written >= 0)
+    {
         serial_write(str, written);
     }
-    else {
+    else
+    {
         serial_write_str(error_str);
     }
     serial_write_str("\n");
@@ -61,10 +65,12 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic)
     serial_write_str("h");
     serial_write_str(" -> ");
     written = snprintf(str, 10, "h");
-    if (written >= 0) {
+    if (written >= 0)
+    {
         serial_write(str, written);
     }
-    else {
+    else
+    {
         serial_write_str(error_str);
     }
     serial_write_str("\n");
@@ -74,23 +80,26 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic)
     serial_write_str("<null>");
     serial_write_str(" -> ");
     written = snprintf(str, 10, "%");
-    if (written >= 0) {
+    if (written >= 0)
+    {
         serial_write(str, written);
     }
-    else {
+    else
+    {
         serial_write_str(error_str);
     }
     serial_write_str("\n");
 
-    
     // most basic format spec %%
     serial_write_str("%");
     serial_write_str(" -> ");
     written = snprintf(str, 10, "%%");
-    if (written >= 0) {
+    if (written >= 0)
+    {
         serial_write(str, written);
     }
-    else {
+    else
+    {
         serial_write_str(error_str);
     }
     serial_write_str("\n");
@@ -99,10 +108,12 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic)
     serial_write_str("hello, world!");
     serial_write_str(" -> ");
     written = snprintf(str, SERIAL_MAX_STR_LEN, "hello, %s!", "world");
-    if (written >= 0) {
+    if (written >= 0)
+    {
         serial_write(str, written);
     }
-    else {
+    else
+    {
         serial_write_str(error_str);
     }
     serial_write_str("\n");
@@ -111,10 +122,12 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic)
     serial_write_str("hello, wor");
     serial_write_str(" -> ");
     written = snprintf(str, 10, "hello, %s!", "world");
-    if (written >= 0) {
+    if (written >= 0)
+    {
         serial_write(str, written);
     }
-    else {
+    else
+    {
         serial_write_str(error_str);
     }
     serial_write_str("\n");
@@ -123,10 +136,145 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic)
     serial_write_str("hello, wor!");
     serial_write_str(" -> ");
     written = snprintf(str, SERIAL_MAX_STR_LEN, "hello, %.3s!", "world");
-    if (written >= 0) {
+    if (written >= 0)
+    {
         serial_write(str, written);
     }
-    else {
+    else
+    {
+        serial_write_str(error_str);
+    }
+    serial_write_str("\n");
+
+    // %s string with a precision that is to large
+    serial_write_str("hello, world!");
+    serial_write_str(" -> ");
+    written = snprintf(str, SERIAL_MAX_STR_LEN, "hello, %.10s!", "world");
+    if (written >= 0)
+    {
+        serial_write(str, written);
+    }
+    else
+    {
+        serial_write_str(error_str);
+    }
+    serial_write_str("\n");
+
+    // %s string with a precision that is to large and max n
+    // happens in the middle of %s
+    serial_write_str("hello, wor");
+    serial_write_str(" -> ");
+    written = snprintf(str, 10, "hello, %.100s!", "world");
+    if (written >= 0)
+    {
+        serial_write(str, written);
+    }
+    else
+    {
+        serial_write_str(error_str);
+    }
+    serial_write_str("\n");
+
+    // %s with a field width larger than string length
+    serial_write_str("hello, |     world|");
+    serial_write_str(" -> ");
+    written = snprintf(str, SERIAL_MAX_STR_LEN, "hello, |%10s|", "world");
+    if (written >= 0)
+    {
+        serial_write(str, written);
+    }
+    else
+    {
+        serial_write_str(error_str);
+    }
+    serial_write_str("\n");
+
+    // %s string with a field width and precision
+    serial_write_str("| nick|horto|");
+    serial_write_str(" -> ");
+    written =
+        snprintf(str, SERIAL_MAX_STR_LEN, "|%5.5s|%5.5s|", "nick", "horton");
+    if (written >= 0)
+    {
+        serial_write(str, written);
+    }
+    else
+    {
+        serial_write_str(error_str);
+    }
+    serial_write_str("\n");
+
+    // %s string with a field width and precision
+    // but pecision is less than field width and string length
+    serial_write_str("|      nick|     horto|");
+    serial_write_str(" -> ");
+    written =
+        snprintf(str, SERIAL_MAX_STR_LEN, "|%10.5s|%10.5s|", "nick", "horton");
+    if (written >= 0)
+    {
+        serial_write(str, written);
+    }
+    else
+    {
+        serial_write_str(error_str);
+    }
+    serial_write_str("\n");
+
+    // %s string with a field width and precision
+    // but precision is larger than field witdth and string length
+    serial_write_str("|horton|");
+    serial_write_str(" -> ");
+    written = snprintf(str, SERIAL_MAX_STR_LEN, "|%5.10s|", "horton");
+    if (written >= 0)
+    {
+        serial_write(str, written);
+    }
+    else
+    {
+        serial_write_str(error_str);
+    }
+    serial_write_str("\n");
+
+    // %s string with a field width and justify left
+    serial_write_str("|nick    |");
+    serial_write_str(" -> ");
+    written = snprintf(str, SERIAL_MAX_STR_LEN, "|%-8s|", "nick");
+    if (written >= 0)
+    {
+        serial_write(str, written);
+    }
+    else
+    {
+        serial_write_str(error_str);
+    }
+    serial_write_str("\n");
+
+    // %s string with a field width and justify left but strlen is larger than
+    // field width
+    serial_write_str("|nickhorton|");
+    serial_write_str(" -> ");
+    written = snprintf(str, SERIAL_MAX_STR_LEN, "|%-8s|", "nickhorton");
+    if (written >= 0)
+    {
+        serial_write(str, written);
+    }
+    else
+    {
+        serial_write_str(error_str);
+    }
+    serial_write_str("\n");
+
+    // %s string with a field width, percision and justify left but strlen is
+    // larger than field width and precision
+    serial_write_str("|nick    |");
+    serial_write_str(" -> ");
+    written = snprintf(str, SERIAL_MAX_STR_LEN, "|%-8.4s|", "nickhorton");
+    if (written >= 0)
+    {
+        serial_write(str, written);
+    }
+    else
+    {
         serial_write_str(error_str);
     }
     serial_write_str("\n");
