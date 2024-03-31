@@ -1,6 +1,8 @@
 #include <stdalign.h>
 #include <stdarg.h>
 #include <stdbool.h>
+
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -27,8 +29,6 @@ static int int32_to_string(int n, char* dest, int min_widht, bool plus_sign,
 static char uint_to_lc_hexdigit_char(unsigned int digit);
 static char uint_to_uc_hexdigit_char(unsigned int digit);
 
-static bool is_digit(char c);
-
 static int parse_uint(const char* restrict str, int* digit_size);
 
 int _snprintf(char* restrict str, size_t n, const char* restrict format,
@@ -46,7 +46,7 @@ int snprintf(char* restrict str, size_t n, const char* restrict format, ...)
 
 // needs to return however many bytes are written to dest
 size_t snprint(char* restrict dest, size_t start, size_t n, size_t max_n,
-            const char* restrict src)
+               const char* restrict src)
 {
     size_t src_index = 0;
     for (size_t dest_index = start;
@@ -67,7 +67,7 @@ int _snprintf(char* restrict str, size_t n, const char* restrict format,
               va_list parameters)
 {
     // space for the \0 char at the end
-    n = n-1;
+    n = n - 1;
     size_t written = 0;
 
     while (*format != '\0' && written < n)
@@ -263,12 +263,10 @@ int _snprintf(char* restrict str, size_t n, const char* restrict format,
         }
     }
     // write a \0 at the end
-    snprint(str, written, 1, n+1, "\0");
+    snprint(str, written, 1, n + 1, "\0");
     // returns length of written, not including \0
     return written;
 }
-
-static bool is_digit(char c) { return c >= 48 && c <= 57; }
 
 // assuming that the zeroth index of char* str is the first digit
 // if zeroth index of char* str is not a digit returns 0
@@ -277,7 +275,7 @@ static int parse_uint(const char* restrict str, int* digit_size)
 {
     const char* restrict begining = str;
     const char* restrict end = str;
-    while (is_digit(*end))
+    while (isdigit(*end))
     {
         ++end;
         ++(*digit_size);

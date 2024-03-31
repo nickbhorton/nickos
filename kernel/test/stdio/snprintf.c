@@ -464,6 +464,8 @@ int d_format_spec_with_precision_feild_width_left_align_sign_always()
     return snprintf_ret;
 }
 
+
+
 void test_snprintf()
 {
     serial_write_str("\x1b[34;1msnprintf\x1b[0m\n");
