@@ -122,7 +122,7 @@ void serial_print_memory(uint8_t* address, uint32_t number_of_bytes,
         char line_buf[SERIAL_MAX_STR_LEN];
         int line_written = 0;
         line_written += snprintf(line_buf, SERIAL_MAX_STR_LEN - line_written,
-                                 "%X %d: ", address + i, i);
+                                 "0x%X %3d: ", address + i, i);
         bool found_non_zero_byte = false;
         for (size_t j = 0; j < bytes_each_line; j++)
         {
@@ -132,7 +132,7 @@ void serial_print_memory(uint8_t* address, uint32_t number_of_bytes,
                 found_non_zero_byte = true;
             }
             line_written += snprintf(line_buf + line_written,
-                                     SERIAL_MAX_STR_LEN, "%X ", cb);
+                                     SERIAL_MAX_STR_LEN, "%hhX ", cb);
         }
         line_written += snprintf(line_buf + line_written,
                                  SERIAL_MAX_STR_LEN - line_written, "\n");

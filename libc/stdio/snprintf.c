@@ -89,6 +89,7 @@ int _snprintf(
         }
 
         fprintf_flags flags = 0;
+        int bytes_of_arg = -1;
 
         const char* format_specification_start = format;
         format++;
@@ -149,6 +150,25 @@ int _snprintf(
                     format++;
                     // leading zeros
                     flags |= 0x10;
+                    break;
+                }
+
+                case 'h':
+                {
+                    format++;
+                    if (*format == 'h')
+                    {
+                        format++;
+                        bytes_of_arg = sizeof(char);
+                    }
+                    else if (*format == '\0')
+                    {
+                        return -1;
+                    }
+                    else
+                    {
+                        bytes_of_arg = sizeof(short);
+                    }
                     break;
                 }
 
@@ -259,7 +279,11 @@ int _snprintf(
                     unsigned int va_arg_uint = va_arg(parameters, unsigned int);
                     unsigned char* ptr = (unsigned char*)&va_arg_uint;
                     // backwards because host byte order
-                    for (int i = sizeof(unsigned int) - 1; i > -1; i--)
+                    if (bytes_of_arg < 1)
+                    {
+                        bytes_of_arg = sizeof(unsigned int);
+                    }
+                    for (int i = bytes_of_arg - 1; i > -1; i--)
                     {
                         char a[3];
                         a[0] = uint_to_lc_hexdigit_char(ptr[i] >> 4);
