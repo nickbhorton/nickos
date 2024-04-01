@@ -2,6 +2,8 @@
 #include <kernel/serial.h>
 #include <kernel/idt.h>
 
+#include "pic.h"
+
 idtr_t read_idtr()
 {
     idtr_t result = {0, 0};
@@ -27,7 +29,8 @@ void idt_set_descriptor(uint8_t vector, void* isr, uint8_t flags)
 
 void initialize_idt()
 {
-    for (uint8_t i = 0; i < 32; i++)
+    pic_init();
+    for (uint8_t i = 0; i < 48; i++)
     {
         idt_set_descriptor(i, isr_stub_table[i], 0x8E);
     }
