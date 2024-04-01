@@ -8,9 +8,10 @@
 #include <kernel/serial.h>
 #include <kernel/tty.h>
 
-#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
+#include <tests/tests.h>
 
 __attribute__((constructor)) void kernel_init(void)
 {

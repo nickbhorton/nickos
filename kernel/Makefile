@@ -41,17 +41,21 @@ CRTEND_OBJ    := \
 	$(shell $(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=crtend.o)
 CRTN_OBJ      := $(ARCHDIR)/crtn.o
 
+TEST_OBJS:= test/stdio/snprintf.o
+
 OBJS=\
 	$(CRTI_OBJ)         \
 	$(CRTBEGIN_OBJ)     \
 	$(KERNEL_OBJS)      \
 	$(CRTEND_OBJ)       \
 	$(CRTN_OBJ)         \
+	$(TEST_OBJS)        \
 
 INTERNAL_OBJS=\
 	$(CRTI_OBJ)         \
 	$(KERNEL_OBJS)      \
 	$(CRTN_OBJ)         \
+	$(TEST_OBJS)        \
 
 LINK_LIST=\
 	$(LDFLAGS)          \

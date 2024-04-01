@@ -16,7 +16,13 @@ EOF
 grub-mkrescue -o nickos.iso isodir
 
 rm -rf out.txt
+# this is for dumping qemu exceptions
 # qemu-system-$(${SCRIPTSDIR}/to-arch.bash $HOST) -d int -cdrom nickos.iso -serial stdio > out.txt
+
+# this is for debugging with gdb
+# qemu-system-$(${SCRIPTSDIR}/to-arch.bash $HOST) -cdrom nickos.iso -s -S
+
+# normal run
 qemu-system-$(${SCRIPTSDIR}/to-arch.bash $HOST) -cdrom nickos.iso -serial stdio > out.txt
 cat out.txt
 
