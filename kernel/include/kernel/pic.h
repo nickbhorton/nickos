@@ -54,4 +54,10 @@ uint16_t pic_get_irr(void);
 /* Returns the combined value of the cascaded PICs in-service register */
 uint16_t pic_get_isr(void);
 
+void wait_output_buffer_clear();
+void wait_input_buffer_set();
+void wait_output_buffer_set();
+void wait_input_buffer_clear();
+
 #endif
+
