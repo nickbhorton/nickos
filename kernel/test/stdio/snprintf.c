@@ -17,7 +17,9 @@ int run_test(int (*f)(), const char* test_name)
     }
     else
     {
-        serial_printf("%-80.80s \x1b[31;1mfailed\x1b[0m with %d\n", test_name, ret);
+        serial_printf(
+            "%-65.65s \x1b[31;1mfailed\x1b[0m with %d\n", test_name, ret
+        );
         return 0;
     }
 };
@@ -179,8 +181,9 @@ int s_format_spec_with_field_width_and_precision()
 {
     const char* correct_result = "| nick|horto|";
     char result[SERIAL_MAX_STR_LEN];
-    int snprintf_ret = snprintf(result, strlen(correct_result) + 1,
-                                "|%5.5s|%5.5s|", "nick", "horton");
+    int snprintf_ret = snprintf(
+        result, strlen(correct_result) + 1, "|%5.5s|%5.5s|", "nick", "horton"
+    );
     int strcmp_ret = strcmp(correct_result, result);
     if (snprintf_ret > 0)
     {
@@ -193,8 +196,9 @@ int s_format_spec_with_large_field_width_and_small_precision()
 {
     const char* correct_result = "|      nick|     horto|";
     char result[SERIAL_MAX_STR_LEN];
-    int snprintf_ret = snprintf(result, strlen(correct_result) + 1,
-                                "|%10.5s|%10.5s|", "nick", "horton");
+    int snprintf_ret = snprintf(
+        result, strlen(correct_result) + 1, "|%10.5s|%10.5s|", "nick", "horton"
+    );
     int strcmp_ret = strcmp(correct_result, result);
     if (snprintf_ret > 0)
     {
@@ -249,8 +253,9 @@ int s_fs_field_width_and_precision_and_left_align()
 {
     const char* correct_result = "|nick      |";
     char result[SERIAL_MAX_STR_LEN];
-    int snprintf_ret = snprintf(result, strlen(correct_result) + 1, "|%-10.4s|",
-                                "nickbhorton");
+    int snprintf_ret = snprintf(
+        result, strlen(correct_result) + 1, "|%-10.4s|", "nickbhorton"
+    );
     int strcmp_ret = strcmp(correct_result, result);
     if (snprintf_ret > 0)
     {
@@ -464,7 +469,83 @@ int d_format_spec_with_precision_feild_width_left_align_sign_always()
     return snprintf_ret;
 }
 
+int d_format_spec_with_field_width_and_zero()
+{
+    const char* correct_result = "0127";
+    char result[SERIAL_MAX_STR_LEN];
+    int snprintf_ret =
+        snprintf(result, strlen(correct_result) + 1, "%04d", 127);
+    int strcmp_ret = strcmp(correct_result, result);
+    if (snprintf_ret > 0)
+    {
+        if (strcmp_ret > 0)
+        {
+            serial_write_str(result);
+            serial_write_str("\n");
+        }
+        return strcmp_ret;
+    }
+    return snprintf_ret;
+}
 
+// THIS MAY NOT CONFORM TO STANDARD
+// Im not sure weither this correct result in this case is -00127 or -0127 for
+// now im going with this because of the existance of the + and <space> options
+// for sign alignment
+int d_format_spec_with_neg_field_width_and_zero()
+{
+    const char* correct_result = "-0127";
+    const char* format = "%05d";
+    char result[SERIAL_MAX_STR_LEN];
+    int snprintf_ret =
+        snprintf(result, strlen(correct_result) + 1, format, -127);
+    int strcmp_ret = strcmp(correct_result, result);
+    if (snprintf_ret > 0)
+    {
+        return strcmp_ret;
+    }
+    return snprintf_ret;
+}
+
+int d_format_spec_with_left_align_and_leading_zero()
+{
+    const char* correct_result = "|-127   |";
+    const char* format = "|%-07d|";
+    char result[SERIAL_MAX_STR_LEN];
+    int snprintf_ret =
+        snprintf(result, strlen(correct_result) + 1, format, -127);
+    int strcmp_ret = strcmp(correct_result, result);
+    if (snprintf_ret > 0)
+    {
+        if (strcmp_ret > 0)
+        {
+            serial_write_str(result);
+            serial_write_str("\n");
+        }
+        return strcmp_ret;
+    }
+    return snprintf_ret;
+}
+
+int x_format_spec()
+{
+    const char* correct_result = "deaddead";
+    const char* format = "%x";
+    char result[SERIAL_MAX_STR_LEN];
+    int snprintf_ret =
+        snprintf(result, strlen(correct_result) + 1, format, 0xdeaddead);
+    int strcmp_ret = strcmp(correct_result, result);
+    if (snprintf_ret > 0)
+    {
+        if (strcmp_ret > 0)
+        {
+            serial_write_str(result);
+            serial_write_str("\n");
+        }
+        return strcmp_ret;
+    }
+    return snprintf_ret;
+}
 
 void test_snprintf()
 {
@@ -477,41 +558,63 @@ void test_snprintf()
     num_attepted += 1;
     num_passed += run_test(&strlen_given_is_1, "strlen_given_is_1");
     num_attepted += 1;
-    num_passed += run_test(&strlen_of_on_precent_no_spec, "strlen_of_on_precent_no_spec");
+    num_passed +=
+        run_test(&strlen_of_on_precent_no_spec, "strlen_of_on_precent_no_spec");
     num_attepted += 1;
-    num_passed += run_test(&format_spec_precent_precent, "format_spec_precent_precent");
+    num_passed +=
+        run_test(&format_spec_precent_precent, "format_spec_precent_precent");
     num_attepted += 1;
     num_passed += run_test(&s_format_spec_basic, "s_format_spec_basic");
     num_attepted += 1;
-    num_passed += run_test(&s_format_spec_str_too_long, "s_format_spec_str_too_long");
+    num_passed +=
+        run_test(&s_format_spec_str_too_long, "s_format_spec_str_too_long");
     num_attepted += 1;
-    num_passed += run_test(&s_format_spec_with_precision, "s_format_spec_with_precision");
+    num_passed +=
+        run_test(&s_format_spec_with_precision, "s_format_spec_with_precision");
     num_attepted += 1;
-    num_passed += run_test(&s_format_spec_with_precision_to_large,
-             "s_format_spec_with_precision_to_large");
+    num_passed += run_test(
+        &s_format_spec_with_precision_to_large,
+        "s_format_spec_with_precision_to_large"
+    );
     num_attepted += 1;
-    num_passed += run_test(&s_format_spec_with_precision_to_large_and_max_n,
-             "s_format_spec_with_precision_to_large_and_max_n");
+    num_passed += run_test(
+        &s_format_spec_with_precision_to_large_and_max_n,
+        "s_format_spec_with_precision_to_large_and_max_n"
+    );
     num_attepted += 1;
-    num_passed += run_test(&s_format_spec_with_field_width, "s_format_spec_with_field_width");
+    num_passed += run_test(
+        &s_format_spec_with_field_width, "s_format_spec_with_field_width"
+    );
     num_attepted += 1;
-    num_passed += run_test(&s_format_spec_with_field_width_and_precision,
-             "s_format_spec_with_field_width_and_precision");
+    num_passed += run_test(
+        &s_format_spec_with_field_width_and_precision,
+        "s_format_spec_with_field_width_and_precision"
+    );
     num_attepted += 1;
-    num_passed += run_test(&s_format_spec_with_large_field_width_and_small_precision,
-             "s_format_spec_with_large_field_width_and_small_precision");
+    num_passed += run_test(
+        &s_format_spec_with_large_field_width_and_small_precision,
+        "s_format_spec_with_large_field_width_and_small_precision"
+    );
     num_attepted += 1;
-    num_passed += run_test(&s_format_spec_with_small_field_width_and_large_precision,
-             "s_format_spec_with_small_field_width_and_large_precision");
+    num_passed += run_test(
+        &s_format_spec_with_small_field_width_and_large_precision,
+        "s_format_spec_with_small_field_width_and_large_precision"
+    );
     num_attepted += 1;
-    num_passed += run_test(&s_format_spec_field_width_and_left_align,
-             "s_format_spec_field_width_and_left_align");
+    num_passed += run_test(
+        &s_format_spec_field_width_and_left_align,
+        "s_format_spec_field_width_and_left_align"
+    );
     num_attepted += 1;
-    num_passed += run_test(&s_format_spec_field_width_to_large_and_left_align,
-             "s_format_spec_field_width_to_large_and_left_align");
+    num_passed += run_test(
+        &s_format_spec_field_width_to_large_and_left_align,
+        "s_format_spec_field_width_to_large_and_left_align"
+    );
     num_attepted += 1;
-    num_passed += run_test(&s_fs_field_width_and_precision_and_left_align,
-             "s_fs_field_width_and_precision_and_left_align");
+    num_passed += run_test(
+        &s_fs_field_width_and_precision_and_left_align,
+        "s_fs_field_width_and_precision_and_left_align"
+    );
     num_attepted += 1;
     num_passed += run_test(&d_format_spec_basic, "d_format_spec_basic");
     num_attepted += 1;
@@ -523,32 +626,69 @@ void test_snprintf()
     num_attepted += 1;
     num_passed += run_test(&d_format_spec_neg, "d_format_spec_neg");
     num_attepted += 1;
-    num_passed += run_test(&d_format_spec_sign_always, "d_format_spec_sign_always");
+    num_passed +=
+        run_test(&d_format_spec_sign_always, "d_format_spec_sign_always");
     num_attepted += 1;
-    num_passed += run_test(&d_format_spec_sign_align, "d_format_spec_sign_align");
+    num_passed +=
+        run_test(&d_format_spec_sign_align, "d_format_spec_sign_align");
     num_attepted += 1;
-    num_passed += run_test(&d_format_spec_sign_align_and_sign_always,
-             "d_format_spec_sign_align_and_sign_always");
+    num_passed += run_test(
+        &d_format_spec_sign_align_and_sign_always,
+        "d_format_spec_sign_align_and_sign_always"
+    );
     num_attepted += 1;
-    num_passed += run_test(&d_format_spec_with_precision, "d_format_spec_with_precision");
+    num_passed +=
+        run_test(&d_format_spec_with_precision, "d_format_spec_with_precision");
     num_attepted += 1;
-    num_passed += run_test(&d_format_spec_neg_with_precision,
-             "d_format_spec_neg_with_precision");
+    num_passed += run_test(
+        &d_format_spec_neg_with_precision, "d_format_spec_neg_with_precision"
+    );
     num_attepted += 1;
-    num_passed += run_test(&d_format_spec_with_precision_and_sign_always,
-             "d_format_spec_with_precision_and_sign_always");
+    num_passed += run_test(
+        &d_format_spec_with_precision_and_sign_always,
+        "d_format_spec_with_precision_and_sign_always"
+    );
     num_attepted += 1;
-    num_passed += run_test(&d_format_spec_with_precision_feild_width,
-             "d_format_spec_with_precision_feild_width");
+    num_passed += run_test(
+        &d_format_spec_with_precision_feild_width,
+        "d_format_spec_with_precision_feild_width"
+    );
     num_attepted += 1;
-    num_passed += run_test(&d_format_spec_neg_with_precision_feild_width,
-             "d_format_spec_neg_with_precision_feild_width");
+    num_passed += run_test(
+        &d_format_spec_neg_with_precision_feild_width,
+        "d_format_spec_neg_with_precision_feild_width"
+    );
     num_attepted += 1;
-    num_passed += run_test(&d_format_spec_with_precision_feild_width_left_align,
-             "d_format_spec_with_precision_feild_width_left_align");
+    num_passed += run_test(
+        &d_format_spec_with_precision_feild_width_left_align,
+        "d_format_spec_with_precision_feild_width_left_align"
+    );
     num_attepted += 1;
-    num_passed += run_test(&d_format_spec_with_precision_feild_width_left_align_sign_always,
-             "d_format_spec_with_precision_feild_width_left_align_sign_always");
+    num_passed += run_test(
+        &d_format_spec_with_precision_feild_width_left_align_sign_always,
+        "d_format_spec_with_precision_feild_width_left_align_sign_always"
+    );
     num_attepted += 1;
+    num_passed += run_test(
+        &d_format_spec_with_field_width_and_zero,
+        "d_format_spec_with_field_width_and_zero"
+    );
+    num_attepted += 1;
+    num_passed += run_test(
+        &d_format_spec_with_neg_field_width_and_zero,
+        "d_format_spec_with_neg_field_width_and_zero"
+    );
+    num_attepted += 1;
+    num_passed += run_test(
+        &d_format_spec_with_left_align_and_leading_zero,
+        "d_format_spec_with_left_align_and_leading_zero"
+    );
+    num_attepted += 1;
+    num_passed += run_test(
+        &x_format_spec,
+        "x_format_spec"
+    );
+    num_attepted += 1;
+
     serial_printf("passed: %4d / %-4d\n", num_passed, num_attepted);
 }

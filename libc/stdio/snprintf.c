@@ -7,46 +7,53 @@
 #include <string.h>
 
 #define MAX_INT32_STRING_LEN 2048
-// -2,147,483,648 -> 14
-#define MAX_INT32_DIGIT_LEN 14
 
-#define LEFT_JUSTIFIED(x) ((x) & 0x01) // 1 for left, 0 for right
-#define SIGN_ALWAYS(x) ((x) & 0x02)    // if set + sign on pos, - sign always
-#define SIGN_ALIGN(x) ((x) & 0x04)     // if set and add space to pos nums
-#define ALT_FORM(x) ((x) & 0x08)       // see c docs
-#define LEADING_ZEROS ((x) & 0x10)) // if set pad with zeros in certain cases
+#define MAX_INT32_DIGIT_LEN  14 // -2,147,483,648 -> 14
+
+#define LEFT_JUSTIFIED(x)    ((x) & 0x01) // 1 for left, 0 for right
+#define SIGN_ALWAYS(x)       ((x) & 0x02) // if set + sign on pos, - sign always
+#define SIGN_ALIGN(x)        ((x) & 0x04) // if set and add space to pos nums
+#define ALT_FORM(x)          ((x) & 0x08) // see c docs
+#define LEADING_ZEROS(x)     ((x) & 0x10) // if set pad with zeros in certain cases
 
 typedef unsigned char fprintf_flags;
 
 static char int_to_digit_char(int digit);
-// assuming that char is a digit char!!!!!
+
+// @assumption assuming that char is a digit char!!!!!
 static int digit_char_to_int(char end);
 
 // @returns number of char put into dest
-static int int32_to_string(int n, char* dest, int min_widht, bool plus_sign,
-                           bool sign_align);
+static int int32_to_string(
+    int n, char* dest, int precision, int min_width, bool plus_sign,
+    bool sign_align
+);
 
 static char uint_to_lc_hexdigit_char(unsigned int digit);
+
 static char uint_to_uc_hexdigit_char(unsigned int digit);
 
 static int parse_uint(const char* restrict str, int* digit_size);
 
-int _snprintf(char* restrict str, size_t n, const char* restrict format,
-              va_list parameters);
+int _snprintf(
+    char* restrict str, size_t n, const char* restrict format,
+    va_list parameters
+);
+
 int snprintf(char* restrict str, size_t n, const char* restrict format, ...)
 {
     va_list parameters;
     va_start(parameters, format);
-
     int written = _snprintf(str, n, format, parameters);
-
     va_end(parameters);
     return written;
 }
 
 // needs to return however many bytes are written to dest
-size_t snprint(char* restrict dest, size_t start, size_t n, size_t max_n,
-               const char* restrict src)
+size_t snprint(
+    char* restrict dest, size_t start, size_t n, size_t max_n,
+    const char* restrict src
+)
 {
     size_t src_index = 0;
     for (size_t dest_index = start;
@@ -63,8 +70,10 @@ size_t snprint(char* restrict dest, size_t start, size_t n, size_t max_n,
  *          -1          -> unimplemented
  *          -2          -> overflow
  */
-int _snprintf(char* restrict str, size_t n, const char* restrict format,
-              va_list parameters)
+int _snprintf(
+    char* restrict str, size_t n, const char* restrict format,
+    va_list parameters
+)
 {
     // space for the \0 char at the end
     n = n - 1;
@@ -192,15 +201,24 @@ int _snprintf(char* restrict str, size_t n, const char* restrict format,
                     int len = 0;
                     if (precision > 0 && precision < 2048)
                     {
-                        len = int32_to_string(va_arg_int, int_string, precision,
-                                              SIGN_ALWAYS(flags),
-                                              SIGN_ALIGN(flags));
+                        len = int32_to_string(
+                            va_arg_int, int_string, precision, 0,
+                            SIGN_ALWAYS(flags), SIGN_ALIGN(flags)
+                        );
+                    }
+                    else if (precision < 0 && field_width > 0 && field_width < 2048 && LEADING_ZEROS(flags) && !LEFT_JUSTIFIED(flags))
+                    {
+                        len = int32_to_string(
+                            va_arg_int, int_string, 1, field_width,
+                            SIGN_ALWAYS(flags), SIGN_ALIGN(flags)
+                        );
                     }
                     else if (precision < 0)
                     {
-                        len = int32_to_string(va_arg_int, int_string, 1,
-                                              SIGN_ALWAYS(flags),
-                                              SIGN_ALIGN(flags));
+                        len = int32_to_string(
+                            va_arg_int, int_string, 1, 0, SIGN_ALWAYS(flags),
+                            SIGN_ALIGN(flags)
+                        );
                     }
                     else
                     {
@@ -229,6 +247,25 @@ int _snprintf(char* restrict str, size_t n, const char* restrict format,
                     else
                     {
                         written += snprint(str, written, len, n, int_string);
+                    }
+                    break;
+                }
+                // This does not conform to standard at the moment
+                case 'x':
+                case 'X':
+                {
+                    format++;
+                    more_format_spec = false;
+                    unsigned int va_arg_uint = va_arg(parameters, unsigned int);
+                    unsigned char* ptr = (unsigned char*)&va_arg_uint;
+                    // backwards because host byte order
+                    for (int i = sizeof(unsigned int) - 1; i > -1; i--)
+                    {
+                        char a[3];
+                        a[0] = uint_to_lc_hexdigit_char(ptr[i] >> 4);
+                        a[1] = uint_to_lc_hexdigit_char(ptr[i] & 0x0f);
+                        a[2] = '\0';
+                        written += snprint(str, written, 2, n, a);
                     }
                     break;
                 }
@@ -300,15 +337,12 @@ static int parse_uint(const char* restrict str, int* digit_size)
 static char int_to_digit_char(int digit) { return (char)((digit + 48) % 128); }
 static int digit_char_to_int(char end) { return end - 48; }
 
-static int int32_to_string(int n, char* dest, int precision, bool plus_sign,
-                           bool sign_align)
+static int int32_to_string(
+    int n, char* dest, int precision, int min_width, bool plus_sign,
+    bool sign_align
+)
 {
     // cases that are easier to solve with string constants
-    if (n == 0)
-    {
-        dest[0] = '0';
-        return 1;
-    }
     if (n == -2147483648)
     {
         const char* min_int32 = "-2147483648";
@@ -340,6 +374,26 @@ static int int32_to_string(int n, char* dest, int precision, bool plus_sign,
     {
         backward[i] = '0';
         i++;
+    }
+    if (precision == 1 && min_width > 0)
+    {
+        if (neg || plus_sign || sign_align)
+        {
+            // for space with sign or sign aligment
+            while (i < min_width - 1)
+            {
+                backward[i] = '0';
+                i++;
+            }
+        }
+        else
+        {
+            while (i < min_width)
+            {
+                backward[i] = '0';
+                i++;
+            }
+        }
     }
 
     if (neg)
