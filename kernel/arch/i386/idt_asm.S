@@ -8,6 +8,15 @@ exception_handler:
     cli
     hlt
 
+.global exception_handler
+exception_handler_term:
+    call serial_print_registers
+    pushl $keyboard_msg
+    call terminal_writestring
+    addl $4, %esp
+    cli
+    hlt
+
 .macro isr_err_stub num
 .global isr_stub_\num
 isr_stub_\num:
@@ -15,6 +24,17 @@ isr_stub_\num:
     pushl $err_msg
     call serial_printf
     call exception_handler
+    addl $8, %esp
+    iret
+.endm
+
+.macro isr_keyboard_stub num
+.global isr_stub_\num
+isr_stub_\num:
+    pushl $\num
+    pushl $err_msg
+    call serial_printf
+    call exception_handler_term
     addl $8, %esp
     iret
 .endm
@@ -62,9 +82,10 @@ isr_no_err_stub 28
 isr_no_err_stub 29
 isr_err_stub    30
 isr_no_err_stub 31
+
 # irqs remaped
 isr_no_err_stub 32
-isr_no_err_stub 33
+isr_keyboard_stub 33
 isr_no_err_stub 34
 isr_no_err_stub 35
 isr_no_err_stub 36
@@ -138,3 +159,5 @@ no_err_msg:
     .ascii "EXCEPTION %d\n\0"
 message_hlt:
     .ascii "hlt\n\0"
+keyboard_msg:
+    .ascii "keyboard i\0"

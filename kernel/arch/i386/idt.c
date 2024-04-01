@@ -1,8 +1,8 @@
 #include <kernel/register.h>
 #include <kernel/serial.h>
 #include <kernel/idt.h>
+#include <kernel/pic.h>
 
-#include "pic.h"
 
 idtr_t read_idtr()
 {
@@ -27,10 +27,10 @@ void idt_set_descriptor(uint8_t vector, void* isr, uint8_t flags)
     descriptor->reserved = 0;
 }
 
-void initialize_idt()
+void idt_initialize()
 {
     pic_init();
-    for (uint8_t i = 0; i < 48; i++)
+    for (uint8_t i = 0; i < 47; i++)
     {
         idt_set_descriptor(i, isr_stub_table[i], 0x8E);
     }

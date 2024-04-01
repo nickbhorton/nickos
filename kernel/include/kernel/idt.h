@@ -26,7 +26,7 @@ typedef struct {
 
 idtr_t read_idtr();
 void idt_set_descriptor(uint8_t vector, void *isr, uint8_t flags);
-void initialize_idt();
+void idt_initialize();
 
 void handle_page_fault(uint32_t error_code);
 
