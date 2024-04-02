@@ -29,11 +29,11 @@ void idt_set_descriptor(uint8_t vector, void* isr, uint8_t flags)
 
 void idt_initialize()
 {
-    pic_init();
     for (uint8_t i = 0; i < 47; i++)
     {
         idt_set_descriptor(i, isr_stub_table[i], 0x8E);
     }
+    pic_init();
     asm volatile("sti");
 }
 

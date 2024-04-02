@@ -19,7 +19,7 @@ __attribute__((constructor)) void kernel_init(void)
     terminal_initialize();
     idt_initialize();
     char buf[80];
-    int bytes_written = snprintf(buf, 80, "%d", serial_initialize());
+    int bytes_written = snprintf(buf, 80, "serial_initialize() -> %d", serial_initialize());
     if (bytes_written > 0)
     {
         terminal_write(buf, bytes_written);

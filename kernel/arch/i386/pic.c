@@ -44,6 +44,10 @@ void pic_remap(int offset1, int offset2)
 
     outb(PIC1_DATA, a1); // restore saved masks.
     outb(PIC2_DATA, a2);
+
+    outb(PIC1_DATA, 0xff); 
+    outb(PIC2_DATA, 0xff);
+    outb(PIC1_DATA, ~(0x2));
 }
 
 void pic_disable(void)
@@ -162,13 +166,16 @@ void wait_output_buffer_set()
     }
 }
 
+void disable_ps2_port() {
+    wait_input_buffer_clear();
+    // Disable first PS/2 port
+    outb(0x64, 0xAD);
+}
+
 static void work_on_the_pic(void)
 {
     asm("cli");
     pic_disable();
-    wait_input_buffer_clear();
-    // Disable first PS/2 port
-    outb(0x64, 0xAD);
 
     wait_input_buffer_clear();
     // disable second PS/2 port
